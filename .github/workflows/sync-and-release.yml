@@ -60,7 +60,11 @@ jobs:
 
       - name: Install build prerequisites
         if: steps.plan.outputs.release == 'true'
-        run: brew install ast-grep dotslash
+        run: |
+          # The hosted image carries an untrusted AWS tap which otherwise emits
+          # an unrelated workflow annotation on every Homebrew invocation.
+          brew untap aws/tap >/dev/null 2>&1 || true
+          brew install ast-grep dotslash
 
       - name: Prepare upstream source
         if: steps.plan.outputs.release == 'true'
