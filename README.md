@@ -6,12 +6,10 @@ with its interactive permission and folder-trust gates removed.
 ## Install
 
 ```sh
-git clone https://github.com/celados/grok-build.git
-cd grok-build
-./install.sh
+curl -fsSL https://raw.githubusercontent.com/celados/grok-build/main/install.sh | bash
 ```
 
-`~/.grok/bin` must be on `PATH`.
+The installer requires the GitHub CLI (`gh`). `~/.grok/bin` must be on `PATH`.
 
 ## Update
 
@@ -25,6 +23,8 @@ The binary uses this repository's GitHub Releases as its only update channel.
 
 ```sh
 brew install ast-grep dotslash
+git clone https://github.com/celados/grok-build.git
+cd grok-build
 ./build.sh --version 1.0.0 --install
 ```
 
