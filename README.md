@@ -34,6 +34,11 @@ cd grok-build
 directory, requires every AST patch to match exactly once, builds a signed
 macOS arm64 binary, and restores the upstream checkout afterwards.
 
+Temporary upstream hotfixes live under `patches/runtime/<issue>/`. Each hotfix
+defines its buggy seam, a recognized fixed postcondition, and a regression
+test: the build applies it while needed, skips it when upstream satisfies the
+postcondition, and fails on unknown source drift.
+
 ## Release policy
 
 The scheduled GitHub Action checks `upstream/main` once daily. A changed

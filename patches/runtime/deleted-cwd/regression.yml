@@ -1,0 +1,38 @@
+id: test-deleted-persistent-shell-cwd-recovery
+language: Rust
+severity: error
+message: Add the downstream regression test for a deleted persistent-shell cwd.
+rule:
+  pattern:
+    context: |-
+      #[tokio::test]
+      async fn test_persistent_shell_cd_persists() {
+          $$$BODY
+      }
+    selector: function_item
+fix: |-
+  async fn test_persistent_shell_cd_persists() {
+      $$$BODY
+  }
+
+  #[tokio::test]
+  async fn test_persistent_shell_recovers_deleted_cwd() {
+      let parent = tempfile::tempdir().unwrap();
+      let deleted = parent.path().join("deleted");
+      tokio::fs::create_dir(&deleted).await.unwrap();
+
+      let backend = LocalTerminalBackend::with_persistent_shell();
+      let mut initialize = make_request("pwd");
+      initialize.working_directory = deleted.clone();
+      assert_eq!(backend.run(initialize).await.unwrap().exit_code, Some(0));
+
+      tokio::fs::remove_dir(&deleted).await.unwrap();
+      let recovered = backend.run(make_request("pwd")).await.unwrap();
+      assert_eq!(recovered.exit_code, Some(0));
+      assert_eq!(
+          PathBuf::from(recovered.combined_output.trim())
+              .canonicalize()
+              .unwrap(),
+          parent.path().canonicalize().unwrap()
+      );
+  }

@@ -57,23 +57,29 @@ if [[ "$PREPARE_ONLY" == true ]]; then
   exit 0
 fi
 
-for command in ast-grep jq cargo; do
+for command in ast-grep jq cargo rustfmt; do
   command -v "$command" >/dev/null || {
     echo "Missing required command: $command" >&2
     exit 1
   }
 done
 
-PATCH_SPECS="
+REQUIRED_PATCH_SPECS="
 patches/permission-allow-all.yml crates/codegen/xai-grok-shell/src/session/acp_session_impl/spawn.rs
 patches/folder-trust-inert.yml crates/codegen/xai-grok-workspace/src/folder_trust.rs
 patches/release-repository.yml crates/codegen/xai-grok-update/src/version.rs
 patches/reinstall-hint.yml crates/codegen/xai-grok-update/src/auto_update.rs
 patches/release-installer.yml crates/codegen/xai-grok-update/src/auto_update.rs
+patches/runtime/deleted-cwd/regression.yml crates/codegen/xai-grok-tools/src/computer/local/terminal.rs
 "
 
+RUNTIME_CWD_PATCH="patches/runtime/deleted-cwd/recover.yml"
+RUNTIME_CWD_SATISFIED="patches/runtime/deleted-cwd/satisfied.yml"
+RUNTIME_CWD_SOURCE="crates/codegen/xai-grok-tools/src/computer/local/terminal.rs"
+ACTIVE_PATCH_SPECS="$REQUIRED_PATCH_SPECS"
+
 assert_patch_seams() {
-  echo "$PATCH_SPECS" | while read -r rule source; do
+  echo "$REQUIRED_PATCH_SPECS" | while read -r rule source; do
     [[ -n "$rule" ]] || continue
     count="$(ast-grep scan --rule "$ROOT_DIR/$rule" --info --json=compact "$SOURCES_DIR/$source" | jq 'length')"
     if [[ "$count" != "1" ]]; then
@@ -85,6 +91,22 @@ assert_patch_seams() {
 }
 
 assert_patch_seams
+
+# Conditional patches have a three-state contract: apply to the known buggy
+# seam, skip only when a recognized equivalent fix already exists, and fail on
+# unknown drift so an upstream refactor cannot silently reintroduce the bug.
+satisfied_count="$(ast-grep scan --rule "$ROOT_DIR/$RUNTIME_CWD_SATISFIED" --info --json=compact "$SOURCES_DIR/$RUNTIME_CWD_SOURCE" | jq 'length')"
+apply_count="$(ast-grep scan --rule "$ROOT_DIR/$RUNTIME_CWD_PATCH" --info --json=compact "$SOURCES_DIR/$RUNTIME_CWD_SOURCE" | jq 'length')"
+if [[ "$satisfied_count" == "1" ]]; then
+  echo "skip: upstream already satisfies deleted-cwd recovery"
+elif [[ "$satisfied_count" == "0" && "$apply_count" == "1" ]]; then
+  ACTIVE_PATCH_SPECS+="$RUNTIME_CWD_PATCH $RUNTIME_CWD_SOURCE"$'\n'
+  echo "apply: $RUNTIME_CWD_PATCH -> $RUNTIME_CWD_SOURCE"
+else
+  echo "Deleted-cwd patch contract drifted: apply=$apply_count satisfied=$satisfied_count" >&2
+  exit 1
+fi
+
 if [[ "$CHECK_ONLY" == true ]]; then
   exit 0
 fi
@@ -98,7 +120,7 @@ if [[ "$(uname -s)" != Darwin || "$(uname -m)" != arm64 ]]; then
   exit 1
 fi
 
-PATCHED_FILES="$(echo "$PATCH_SPECS" | awk 'NF && !seen[$2]++ { print $2 }')"
+PATCHED_FILES="$(echo "$ACTIVE_PATCH_SPECS" | awk 'NF && !seen[$2]++ { print $2 }')"
 for source in $PATCHED_FILES; do
   if ! git -C "$SOURCES_DIR" diff --quiet HEAD -- "$source"; then
     echo "Refusing to patch a modified source file: $source" >&2
@@ -112,14 +134,24 @@ restore_sources() {
 }
 trap restore_sources EXIT INT TERM
 
-echo "$PATCH_SPECS" | while read -r rule source; do
+echo "$ACTIVE_PATCH_SPECS" | while read -r rule source; do
   [[ -n "$rule" ]] || continue
   ast-grep scan --rule "$ROOT_DIR/$rule" --info --update-all "$SOURCES_DIR/$source"
 done
 
+postcondition_count="$(ast-grep scan --rule "$ROOT_DIR/$RUNTIME_CWD_SATISFIED" --info --json=compact "$SOURCES_DIR/$RUNTIME_CWD_SOURCE" | jq 'length')"
+if [[ "$postcondition_count" != "1" ]]; then
+  echo "Deleted-cwd recovery postcondition expected 1 match, found $postcondition_count" >&2
+  exit 1
+fi
+
 (
   cd "$SOURCES_DIR"
   cargo fmt -p xai-grok-shell -p xai-grok-workspace -p xai-grok-update -- --check
+  # ast-grep preserves metavariable indentation when it inserts the regression
+  # test; format only the owned patched file so unrelated upstream files stay untouched.
+  rustfmt --edition 2024 crates/codegen/xai-grok-tools/src/computer/local/terminal.rs
+  cargo test --release -p xai-grok-tools test_persistent_shell_recovers_deleted_cwd --lib
   # Upstream enables release incremental artifacts; disabling them keeps the
   # build and cache inside GitHub's hosted-runner disk boundary.
   CARGO_INCREMENTAL=0 GROK_VERSION="$VERSION" cargo build --release -p xai-grok-pager-bin

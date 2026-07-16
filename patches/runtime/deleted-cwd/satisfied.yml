@@ -1,0 +1,25 @@
+id: deleted-persistent-shell-cwd-already-recovered
+language: Rust
+severity: error
+message: Detect an existing deleted-cwd recovery before applying the downstream hotfix.
+rule:
+  all:
+    - any:
+        - pattern: |-
+            if !$STATE.cwd.is_dir() {
+                $$$BODY
+            }
+        - pattern: |-
+            if !$STATE.cwd.exists() {
+                $$$BODY
+            }
+    - has:
+        pattern: $TARGET.cwd = $NEW_CWD
+        stopBy: end
+    - inside:
+        all:
+          - kind: function_item
+          - has:
+              pattern: self.shell_state.as_mut()
+              stopBy: end
+        stopBy: end

@@ -1,0 +1,35 @@
+id: recover-deleted-persistent-shell-cwd
+language: Rust
+severity: error
+message: Recover a persistent shell whose working directory was deleted.
+rule:
+  all:
+    - pattern: let shell_state = self.shell_state.as_ref().unwrap();
+    - inside:
+        pattern:
+          context: |-
+            async fn spawn_persistent_command(
+                &mut self,
+                command: &str,
+                cwd: &std::path::Path,
+                env: &HashMap<String, String>,
+            ) -> Result<SpawnResult, ComputerError> {
+                $$$BODY
+            }
+          selector: function_item
+        stopBy: end
+fix: |-
+  let shell_state = self.shell_state.as_mut().unwrap();
+  if !shell_state.cwd.is_dir() {
+      if let Some(existing) = shell_state.cwd.ancestors().skip(1).find(|path| path.is_dir()) {
+          // A shell cannot execute its own recovery `cd` when spawn fails first;
+          // the nearest surviving ancestor preserves more task context than HOME.
+          tracing::warn!(
+              deleted_cwd = %shell_state.cwd.display(),
+              fallback_cwd = %existing.display(),
+              "persistent shell cwd disappeared; recovering before spawn"
+          );
+          shell_state.cwd = existing.to_path_buf();
+      }
+  }
+  let shell_state = &*shell_state;
