@@ -41,7 +41,8 @@ prepare_sources() {
     echo "sources/ origin must be $UPSTREAM_URL" >&2
     exit 1
   fi
-  if ! git -C "$SOURCES_DIR" diff --quiet HEAD -- 2>/dev/null; then
+  if git -C "$SOURCES_DIR" rev-parse --verify HEAD >/dev/null 2>&1 \
+    && ! git -C "$SOURCES_DIR" diff --quiet HEAD --; then
     echo "Refusing to replace a modified sources/ checkout." >&2
     exit 1
   fi
