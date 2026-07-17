@@ -1,0 +1,15 @@
+id: opencode-bash-workdir-tilde-already-expanded
+language: Rust
+severity: error
+message: Detect an existing tilde expansion in the opencode bash workdir resolution.
+rule:
+  all:
+    - pattern: shellexpand::tilde(dir)
+    - inside:
+        pattern:
+          context: |-
+            fn resolve_cwd(session_cwd: &std::path::Path, workdir: Option<&str>) -> PathBuf {
+                $$$BODY
+            }
+          selector: function_item
+        stopBy: end

@@ -1,0 +1,27 @@
+id: test-opencode-bash-workdir-tilde-expansion
+language: Rust
+severity: error
+message: Add a regression test for tilde expansion in the opencode bash workdir resolution.
+rule:
+  pattern:
+    context: |-
+      #[tokio::test]
+      async fn workdir_overrides_cwd() {
+          $$$BODY
+      }
+    selector: function_item
+fix: |-
+  async fn workdir_overrides_cwd() {
+      $$$BODY
+  }
+
+  #[tokio::test]
+  async fn workdir_expands_tilde_to_home() {
+      let session_cwd = std::path::Path::new("/home/user/project");
+      let home = std::env::var("HOME").expect("HOME must be set for this test");
+
+      // Without tilde expansion, `~/subdir` joins onto the session cwd
+      // (`<cwd>/~/subdir`) because `Path::is_absolute` rejects tilde paths.
+      let resolved = BashTool::resolve_cwd(session_cwd, Some("~/subdir"));
+      assert_eq!(resolved, PathBuf::from(&home).join("subdir"));
+  }

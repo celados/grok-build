@@ -1,0 +1,20 @@
+id: expand-tilde-in-opencode-bash-workdir
+language: Rust
+severity: error
+message: Expand `~` in the opencode bash tool workdir before resolving against the session cwd.
+rule:
+  all:
+    - pattern: let p = std::path::Path::new(dir);
+    - inside:
+        pattern:
+          context: |-
+            fn resolve_cwd(session_cwd: &std::path::Path, workdir: Option<&str>) -> PathBuf {
+                $$$BODY
+            }
+          selector: function_item
+        stopBy: end
+fix: |-
+  // `Path::is_absolute("~/x")` is false, so expand the tilde before the
+  // absolute check; otherwise tilde workdirs silently join onto the session cwd.
+  let expanded = shellexpand::tilde(dir);
+  let p = std::path::Path::new(expanded.as_ref());
