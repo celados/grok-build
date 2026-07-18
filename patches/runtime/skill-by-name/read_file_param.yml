@@ -5,4 +5,4 @@ message: Align target_file schemars description with absolute-path unchanged con
 rule:
   kind: string_literal
   regex: The path of the file to read\. You can use either a relative path in the workspace or an absolute path\. If an absolute path is provided, it will be preserved as is\.
-fix: The path of the file to read. Relative to the workspace, or absolute. Absolute paths must be passed unchanged.
+fix: '"The path of the file to read. Relative to the workspace, or absolute. Absolute paths must be passed unchanged."'
