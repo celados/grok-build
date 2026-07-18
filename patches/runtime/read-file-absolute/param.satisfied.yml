@@ -1,4 +1,4 @@
-id: skill-by-name-read-file-param-satisfied
+id: read-file-absolute-param-satisfied
 language: Rust
 severity: info
 message: target_file schemars already requires absolute paths unchanged.

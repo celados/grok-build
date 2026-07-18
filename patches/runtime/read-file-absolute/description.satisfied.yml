@@ -1,0 +1,7 @@
+id: read-file-absolute-description-satisfied
+language: Rust
+severity: info
+message: read_file description already requires absolute paths unchanged.
+rule:
+  kind: raw_string_literal
+  regex: Absolute paths must be passed unchanged

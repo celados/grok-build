@@ -1,7 +1,0 @@
-id: skill-by-name-read-file-absolute-satisfied
-language: Rust
-severity: info
-message: read_file description already requires absolute paths to be passed unchanged.
-rule:
-  kind: raw_string_literal
-  regex: Absolute paths must be passed unchanged

@@ -1,7 +1,7 @@
-id: skill-by-name-read-file-absolute
+id: read-file-absolute-description
 language: Rust
 severity: error
-message: Align read_file description with Claude Code absolute-path contract.
+message: read_file description — absolute paths must be passed unchanged.
 rule:
   pattern: |-
     pub(crate) const DESCRIPTION_FULL: &str = r#"Read a file.

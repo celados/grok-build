@@ -1,7 +1,7 @@
-id: skill-by-name-read-file-param
+id: read-file-absolute-param
 language: Rust
 severity: error
-message: Align target_file schemars description with absolute-path unchanged contract.
+message: target_file schemars — absolute paths must be passed unchanged.
 rule:
   kind: string_literal
   regex: The path of the file to read\. You can use either a relative path in the workspace or an absolute path\. If an absolute path is provided, it will be preserved as is\.

@@ -42,12 +42,11 @@ The scheduled workflow compares `upstream/main` with the last entry in
 unchanged SHA is a no-op. Failed builds open an issue and do not advance the
 version mapping.
 
-## Runtime: skill-by-name
+## Runtime: read_file absolute path
 
-`patches/runtime/skill-by-name/` (conditional):
+Skill loading is ordinary `read_file` with the Absolute path from the skill
+list. Models sometimes rewrite absolute paths under the workspace.
 
-- Register `OpenCodeSkillTool` on the default/workspace toolset
-- Claude allowlist `Skill` → `skill` tool (not `read_file`)
-- Skill listing: load via skill tool by name
-- `read_file` description: absolute paths must be passed unchanged (Claude-style path contract)
-- Regression test for skill tool presence
+`patches/runtime/read-file-absolute/` (conditional) only hardens the
+`read_file` tool description and `target_file` param: absolute paths must
+be passed unchanged.

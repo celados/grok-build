@@ -1,7 +1,0 @@
-id: skill-by-name-claude-alias-satisfied
-language: Rust
-severity: info
-message: Claude Skill allowlist already maps to ToolKind::Skill.
-rule:
-  kind: call_expression
-  pattern: k("Skill", Skill, &["skill"])
