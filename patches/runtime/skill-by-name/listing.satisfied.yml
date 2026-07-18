@@ -1,0 +1,14 @@
+id: skill-by-name-listing-header-satisfied
+language: Rust
+severity: info
+message: Skill listing header already instructs name-based skill tool invocation.
+rule:
+  pattern: |-
+    fn listing_header(tool_name: &str) -> String {
+        format!(
+            "The following skills are available. When a skill matches the task, \
+             call the `{tool_name}` tool with the skill name (e.g. name: \"ctx\"). \
+             Do NOT read SKILL.md via read_file — copy Absolute path only if \
+             debugging; never re-root paths under the workspace.\n\n"
+        )
+    }

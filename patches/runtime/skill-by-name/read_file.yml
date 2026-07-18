@@ -1,0 +1,25 @@
+id: skill-by-name-read-file-absolute
+language: Rust
+severity: error
+message: read_file description must forbid rewriting absolute paths (skill Absolute path pitfall).
+rule:
+  pattern: |-
+    pub(crate) const DESCRIPTION_FULL: &str = r#"Read a file.
+
+    Usage:
+    - The target_file parameter can be a relative path in the workspace or an absolute path
+    - By default, it reads up to {max_lines_read} lines starting from the beginning of the file
+    - Results are returned with line numbers starting at 1. The format is: LINE_NUMBER→LINE_CONTENT
+    - This tool can read PDF files (.pdf), PowerPoint files (.pptx), Jupyter notebooks (.ipynb files), and image files (e.g. PNG, JPG, etc).
+    - When reading an image file the contents are presented visually as this tool uses multimodal LLMs."#;
+fix: |-
+  pub(crate) const DESCRIPTION_FULL: &str = r#"Read a file.
+
+  Usage:
+  - The target_file parameter can be a relative path in the workspace or an absolute path
+  - If target_file is already absolute (starts with / or a drive letter), pass it VERBATIM — never re-root it under the workspace (e.g. do not turn ~/.agents/skills/... into workspace/.agents/skills/...)
+  - For agent skills, prefer the skill tool by name; do not load SKILL.md via this tool unless debugging
+  - By default, it reads up to {max_lines_read} lines starting from the beginning of the file
+  - Results are returned with line numbers starting at 1. The format is: LINE_NUMBER→LINE_CONTENT
+  - This tool can read PDF files (.pdf), PowerPoint files (.pptx), Jupyter notebooks (.ipynb files), and image files (e.g. PNG, JPG, etc).
+  - When reading an image file the contents are presented visually as this tool uses multimodal LLMs."#;

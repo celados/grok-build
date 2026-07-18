@@ -1,0 +1,7 @@
+id: skill-by-name-read-file-absolute-satisfied
+language: Rust
+severity: info
+message: read_file description already forbids absolute path re-rooting.
+rule:
+  kind: string_literal
+  regex: pass it VERBATIM

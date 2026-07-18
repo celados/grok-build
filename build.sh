@@ -85,6 +85,21 @@ RUNTIME_PROMPT_DIR="patches/runtime/prompt-background-tasks"
 RUNTIME_PROMPT_SOURCE="crates/codegen/xai-grok-agent/templates/prompt.md"
 RUNTIME_PROMPT_ENCRYPTED="crates/codegen/xai-grok-agent/src/prompt/prompt_encrypted.rs"
 APPLY_PROMPT_TEXT_PATCH=false
+# Claude-style skill-by-name load (no Absolute-path read_file for skills).
+RUNTIME_SKILL_DIR="patches/runtime/skill-by-name"
+RUNTIME_SKILL_TOOLSET_PATCH="$RUNTIME_SKILL_DIR/toolset.yml"
+RUNTIME_SKILL_TOOLSET_SATISFIED="$RUNTIME_SKILL_DIR/toolset.satisfied.yml"
+RUNTIME_SKILL_TOOLSET_SOURCE="crates/codegen/xai-grok-agent/src/config.rs"
+RUNTIME_SKILL_ALIAS_PATCH="$RUNTIME_SKILL_DIR/alias.yml"
+RUNTIME_SKILL_ALIAS_SATISFIED="$RUNTIME_SKILL_DIR/alias.satisfied.yml"
+RUNTIME_SKILL_ALIAS_SOURCE="crates/codegen/xai-grok-tools/src/types/claude_alias.rs"
+RUNTIME_SKILL_LISTING_PATCH="$RUNTIME_SKILL_DIR/listing.yml"
+RUNTIME_SKILL_LISTING_SATISFIED="$RUNTIME_SKILL_DIR/listing.satisfied.yml"
+RUNTIME_SKILL_LISTING_SOURCE="crates/codegen/xai-grok-tools/src/types/skill_discovery_tracker/listing.rs"
+RUNTIME_SKILL_READ_PATCH="$RUNTIME_SKILL_DIR/read_file.yml"
+RUNTIME_SKILL_READ_SATISFIED="$RUNTIME_SKILL_DIR/read_file.satisfied.yml"
+RUNTIME_SKILL_READ_SOURCE="crates/codegen/xai-grok-tools/src/implementations/grok_build/read_file/mod.rs"
+RUNTIME_SKILL_REGRESSION_PATCH="$RUNTIME_SKILL_DIR/regression.yml"
 ACTIVE_PATCH_SPECS="$REQUIRED_PATCH_SPECS"
 
 assert_patch_seams() {
@@ -124,6 +139,20 @@ apply_conditional_patch() {
 
 apply_conditional_patch "Deleted-cwd" "$RUNTIME_CWD_PATCH" "$RUNTIME_CWD_SATISFIED" "$RUNTIME_CWD_SOURCE"
 apply_conditional_patch "Bash workdir tilde" "$RUNTIME_TILDE_PATCH" "$RUNTIME_TILDE_SATISFIED" "$RUNTIME_TILDE_SOURCE"
+apply_conditional_patch "Skill-by-name toolset" "$RUNTIME_SKILL_TOOLSET_PATCH" "$RUNTIME_SKILL_TOOLSET_SATISFIED" "$RUNTIME_SKILL_TOOLSET_SOURCE"
+apply_conditional_patch "Skill-by-name alias" "$RUNTIME_SKILL_ALIAS_PATCH" "$RUNTIME_SKILL_ALIAS_SATISFIED" "$RUNTIME_SKILL_ALIAS_SOURCE"
+apply_conditional_patch "Skill-by-name listing" "$RUNTIME_SKILL_LISTING_PATCH" "$RUNTIME_SKILL_LISTING_SATISFIED" "$RUNTIME_SKILL_LISTING_SOURCE"
+apply_conditional_patch "Skill-by-name read_file" "$RUNTIME_SKILL_READ_PATCH" "$RUNTIME_SKILL_READ_SATISFIED" "$RUNTIME_SKILL_READ_SOURCE"
+
+# Regression test is apply-only while the buggy (no-skill-tool) toolset is present.
+skill_reg_count="$(ast-grep scan --rule "$ROOT_DIR/$RUNTIME_SKILL_REGRESSION_PATCH" --info --json=compact "$SOURCES_DIR/$RUNTIME_SKILL_TOOLSET_SOURCE" | jq 'length')"
+if [[ "$skill_reg_count" == "1" ]]; then
+  ACTIVE_PATCH_SPECS+="$RUNTIME_SKILL_REGRESSION_PATCH $RUNTIME_SKILL_TOOLSET_SOURCE"$'\n'
+  echo "apply: $RUNTIME_SKILL_REGRESSION_PATCH -> $RUNTIME_SKILL_TOOLSET_SOURCE"
+else
+  echo "Skill-by-name regression patch contract drifted: count=$skill_reg_count" >&2
+  exit 1
+fi
 
 text_count() {
   python3 - "$1" "$2" <<'PY'
@@ -211,6 +240,10 @@ assert_postcondition() {
 
 assert_postcondition "Deleted-cwd recovery" "$RUNTIME_CWD_SATISFIED" "$RUNTIME_CWD_SOURCE"
 assert_postcondition "Bash workdir tilde expansion" "$RUNTIME_TILDE_SATISFIED" "$RUNTIME_TILDE_SOURCE"
+assert_postcondition "Skill-by-name toolset" "$RUNTIME_SKILL_TOOLSET_SATISFIED" "$RUNTIME_SKILL_TOOLSET_SOURCE"
+assert_postcondition "Skill-by-name alias" "$RUNTIME_SKILL_ALIAS_SATISFIED" "$RUNTIME_SKILL_ALIAS_SOURCE"
+assert_postcondition "Skill-by-name listing" "$RUNTIME_SKILL_LISTING_SATISFIED" "$RUNTIME_SKILL_LISTING_SOURCE"
+assert_postcondition "Skill-by-name read_file" "$RUNTIME_SKILL_READ_SATISFIED" "$RUNTIME_SKILL_READ_SOURCE"
 
 postcondition_text="$(text_count "$ROOT_DIR/$RUNTIME_PROMPT_DIR/satisfied.md" "$SOURCES_DIR/$RUNTIME_PROMPT_SOURCE")"
 if [[ "$postcondition_text" != "1" ]]; then
@@ -229,6 +262,7 @@ fi
   cargo test --release -p xai-grok-tools test_persistent_shell_recovers_deleted_cwd --lib
   cargo test --release -p xai-grok-tools workdir_expands_tilde_to_home --lib
   cargo test --release -p xai-grok-agent test_background_tasks_defines_callback_and_poll --lib
+  cargo test --release -p xai-grok-agent test_default_and_workspace_toolsets_include_skill_tool --lib
   # Upstream enables release incremental artifacts; disabling them keeps the
   # build and cache inside GitHub's hosted-runner disk boundary.
   CARGO_INCREMENTAL=0 GROK_VERSION="$VERSION" cargo build --release -p xai-grok-pager-bin

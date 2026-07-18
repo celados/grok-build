@@ -1,0 +1,8 @@
+id: skill-by-name-claude-alias
+language: Rust
+severity: error
+message: Map Claude allowlist Skill to ToolKind::Skill (skill tool), not Read/read_file.
+rule:
+  kind: call_expression
+  pattern: k("Skill", Read, &["skill"])
+fix: k("Skill", Skill, &["skill"])

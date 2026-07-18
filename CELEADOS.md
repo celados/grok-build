@@ -41,3 +41,23 @@ The scheduled workflow compares `upstream/main` with the last entry in
 `versions.jsonl`. A changed SHA triggers one patched build and release; an
 unchanged SHA is a no-op. Failed builds open an issue and do not advance the
 version mapping.
+
+## Runtime: skill-by-name (Claude-style)
+
+Upstream `grok-build` toolsets deliberately omit a Skill tool and instruct
+models to open `SKILL.md` via `read_file` using the listed Absolute path.
+Models (Grok, Kimi, …) commonly re-root that absolute path under the workspace
+(`~/.agents/skills/…` → `workspace/.agents/skills/…`), which fails hard.
+
+`patches/runtime/skill-by-name/` aligns the harness with Claude Code:
+
+| Patch | Effect |
+| --- | --- |
+| `toolset.yml` | Register `OpenCodeSkillTool` in `default_grok_build_toolset` (workspace inherits) |
+| `alias.yml` | Claude allowlist `Skill` → `ToolKind::Skill` / `skill` (not `Read`/`read_file`) |
+| `listing.yml` | Listing header: call skill tool **by name**; Absolute path is diagnostic only |
+| `read_file.yml` | Description: absolute paths must be passed VERBATIM; prefer skill tool for skills |
+| `regression.yml` | Unit test that default + workspace toolsets include `skill` |
+
+Apply is conditional (skip when upstream already satisfied). After install,
+agents should load skills with `skill` + `name: "ctx"`, not path surgery.

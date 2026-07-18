@@ -1,0 +1,15 @@
+id: skill-by-name-default-toolset-satisfied
+language: Rust
+severity: info
+message: default_grok_build_toolset already registers OpenCodeSkillTool.
+rule:
+  pattern: |-
+    fn default_grok_build_toolset() -> ToolServerConfig {
+        ToolServerConfig {
+            tools: vec![
+                $$$TOOLS
+                (&opencode::OpenCodeSkillTool).into(),
+            ],
+            behavior_preset: None,
+        }
+    }
