@@ -57,7 +57,10 @@ teaching the model to synthesize paths:
   FNV-1a-32 helper (low 24 bits) and full-file character counts.
 - `patches/runtime/skill-id-tool/`: registers the OpenCode skill tool in every
   skill-discovering toolset, exposes `id`, removes name fallback, and fails
-  closed on ID collisions.
+  closed on ID collisions. Bundled files load through the same tool via a
+  relative `path` argument (traversal rejected, miss returns the file menu);
+  the loaded output lists bundled files as relative paths and carries no
+  absolute paths.
 - `patches/runtime/skill-id-listing/`: renders id-keyed markdown entries
   (`- id: <hex>` / `description: [<name>] …`, incl. the names-only budget
   tier); the bracketed name is a display tag, the id is the only load handle.

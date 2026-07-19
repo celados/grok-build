@@ -79,6 +79,8 @@ patches/runtime/skill-id-tool/input-id.yml crates/codegen/xai-grok-tools/src/imp
 patches/runtime/skill-id-tool/result-collision.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
 patches/runtime/skill-id-tool/find-by-id.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
 patches/runtime/skill-id-tool/run-match.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/list-files-relative.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/format-output.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
 patches/runtime/skill-id-tool/remove-format-name-import.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
 patches/runtime/skill-id-tool/tests.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
 patches/runtime/skill-id-tool/remove-find-short.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
@@ -325,6 +327,7 @@ fi
   cargo test --release -p xai-grok-tools workdir_expands_tilde_to_home --lib
   cargo test --release -p xai-grok-tools fnv_vector_low_24_bits --lib
   cargo test --release -p xai-grok-tools find_skill_by_id_and_collision --lib
+  cargo test --release -p xai-grok-tools skill_file_read_and_menu --lib
   cargo test --release -p xai-grok-tools markdown_listing_includes_ids_in_full_and_name_only_tiers --lib
   cargo test --release -p xai-grok-agent dedupe_skills_name_collision_does_not_propagate_config_source --lib
   cargo test --release -p xai-grok-agent test_background_tasks_defines_callback_and_poll --lib

@@ -37,3 +37,34 @@ fix: |-
           other => panic!("Expected Collision, got {other:?}"),
       }
   }
+
+  #[tokio::test]
+  async fn skill_file_read_and_menu() {
+      let tmp = tempfile::tempdir().unwrap();
+      let dir = tmp.path().join("abc");
+      std::fs::create_dir_all(dir.join("references")).unwrap();
+      std::fs::write(dir.join("SKILL.md"), "---\nname: abc\n---\nbody").unwrap();
+      std::fs::write(dir.join("references/guide.md"), "guide text").unwrap();
+      let skill = make_test_skill("abc", SkillScope::User, dir.join("SKILL.md").to_str().unwrap());
+
+      let ok = read_skill_file(&skill, "references/guide.md").await;
+      assert!(ok.success);
+      assert!(ok.skill_message.unwrap().contains("guide text"));
+
+      let miss = read_skill_file(&skill, "references/missing.md").await;
+      assert!(!miss.success);
+      assert!(
+          miss.tool_result.contains("references/guide.md"),
+          "miss must list the menu: {}",
+          miss.tool_result
+      );
+
+      for escape in ["/etc/passwd", "../abc/SKILL.md"] {
+          assert!(!read_skill_file(&skill, escape).await.success);
+      }
+
+      assert_eq!(
+          list_skill_files(&skill, 10).await,
+          vec!["references/guide.md".to_string()]
+      );
+  }

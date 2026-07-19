@@ -1,0 +1,33 @@
+id: skill-id-tool-format-output
+language: Rust
+severity: error
+message: Drop the file:// base-dir prose; bundled files are relative and load via path.
+rule:
+  pattern:
+    context: |
+      fn format_output(skill: &SkillInfo, content: &str, files: &[String]) -> String {
+        $$$BODY
+      }
+    selector: function_item
+fix: |-
+  fn format_output(skill: &SkillInfo, content: &str, files: &[String]) -> String {
+      let mut out = String::new();
+      out.push_str(&format!("<skill_content name=\"{}\">\n", skill.name));
+      out.push_str(&format!("# Skill: {}\n\n", skill.name));
+      out.push_str(content.trim());
+      out.push('\n');
+      if !files.is_empty() {
+          let files_xml: String = files
+              .iter()
+              .map(|f| format!("<file>{f}</file>"))
+              .collect::<Vec<_>>()
+              .join("\n");
+          out.push_str("\nBundled files (sampled; load with skill(id, path)):\n");
+          out.push_str("<skill_files>\n");
+          out.push_str(&files_xml);
+          out.push('\n');
+          out.push_str("</skill_files>\n");
+      }
+      out.push_str("</skill_content>");
+      out
+  }

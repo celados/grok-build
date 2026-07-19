@@ -17,4 +17,6 @@ fix: |-
   - id: 3f9a21
     description: [example] What the skill does.
 
-  Pass that id. Do not read SKILL.md directly."#;
+  Pass that id. Bundled files load the same way via the optional path argument,
+  relative to the skill directory: skill(id, "references/guide.md"). Do not read
+  SKILL.md directly."#;

@@ -1,7 +1,7 @@
 id: skill-id-tool-run-match
 language: Rust
 severity: error
-message: Handle id success, collision, and not-found cases without name fallback.
+message: Handle id success, collision, not-found, and bundled-file reads without name fallback.
 rule:
   pattern: |
     let skill = match find_skill(&input.name, &available_skills) {
@@ -49,3 +49,6 @@ fix: |-
           });
       }
   };
+  if let Some(rel) = input.path.as_deref() {
+      return Ok(read_skill_file(&skill, rel).await);
+  }

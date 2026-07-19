@@ -15,4 +15,8 @@ fix: |-
       #[serde(rename = "id")]
       #[schemars(description = "The six-character id of the skill to invoke")]
       pub name: String,
+      /// Bundled file to read instead of SKILL.md, relative to the skill directory.
+      #[serde(default, skip_serializing_if = "Option::is_none")]
+      #[schemars(description = "Optional bundled file to read, relative to the skill directory")]
+      pub path: Option<String>,
   }

@@ -1,0 +1,103 @@
+id: skill-id-tool-list-files-relative
+language: Rust
+severity: error
+message: List bundled files as recursive relative paths; add the relative-path file reader.
+rule:
+  pattern:
+    context: |
+      async fn list_skill_files(skill: &SkillInfo, limit: usize) -> Vec<String> {
+        $$$BODY
+      }
+    selector: function_item
+fix: |-
+  /// List up to `limit` bundled files under the skill directory as relative paths.
+  async fn list_skill_files(skill: &SkillInfo, limit: usize) -> Vec<String> {
+      let root = match Path::new(&skill.path).parent() {
+          Some(d) => d.to_path_buf(),
+          None => return vec![],
+      };
+      let mut files = Vec::new();
+      let mut dirs = vec![root.clone()];
+      'walk: while let Some(dir) = dirs.pop() {
+          let mut entries = match tokio::fs::read_dir(&dir).await {
+              Ok(entries) => entries,
+              Err(_) => continue,
+          };
+          while let Ok(Some(entry)) = entries.next_entry().await {
+              if files.len() >= limit {
+                  break 'walk;
+              }
+              let path = entry.path();
+              // file_type() does not follow symlinks, so link cycles cannot recurse.
+              if entry.file_type().await.is_ok_and(|t| t.is_dir()) {
+                  dirs.push(path);
+              } else if !path
+                  .file_name()
+                  .is_some_and(|n| n.eq_ignore_ascii_case("SKILL.md"))
+              {
+                  if let Ok(rel) = path.strip_prefix(&root) {
+                      files.push(rel.display().to_string());
+                  }
+              }
+          }
+      }
+      files.sort();
+      files
+  }
+
+  /// Read one bundled skill file addressed by a path relative to the skill directory.
+  async fn read_skill_file(skill: &SkillInfo, rel: &str) -> SkillOutput {
+      use std::path::Component;
+      let rel_path = Path::new(rel);
+      let escapes = rel_path.components().any(|c| {
+          matches!(
+              c,
+              Component::ParentDir | Component::RootDir | Component::Prefix(_)
+          )
+      });
+      let target = match (escapes, Path::new(&skill.path).parent()) {
+          (false, Some(root)) => root.join(rel_path),
+          _ => {
+              return SkillOutput {
+                  success: false,
+                  tool_result: format!(
+                      "Skill file path \"{rel}\" must stay relative to the skill directory"
+                  ),
+                  skill_name: skill.name.clone(),
+                  skill_message: None,
+                  error: Some(format!("Skill file path \"{rel}\" escapes the skill directory")),
+              };
+          }
+      };
+      match tokio::fs::read_to_string(&target).await {
+          Ok(content) => SkillOutput {
+              success: true,
+              tool_result: format!("Loaded {}/{rel}", skill.name),
+              skill_name: skill.name.clone(),
+              skill_message: Some(format!(
+                  "<skill_file skill=\"{}\" path=\"{rel}\">\n{}\n</skill_file>",
+                  skill.name,
+                  content.trim_end()
+              )),
+              error: None,
+          },
+          Err(e) => {
+              let files = list_skill_files(skill, 10).await;
+              let menu = if files.is_empty() {
+                  "none".to_string()
+              } else {
+                  files.join(", ")
+              };
+              SkillOutput {
+                  success: false,
+                  tool_result: format!(
+                      "Skill file \"{rel}\" not found in {}. Available: {menu}",
+                      skill.name
+                  ),
+                  skill_name: skill.name.clone(),
+                  skill_message: None,
+                  error: Some(format!("Skill file \"{rel}\": {e}")),
+              }
+          }
+      }
+  }
