@@ -1,7 +1,7 @@
 id: skill-id-listing-header
 language: Rust
 severity: error
-message: Define the id-keyed entry shape and forbid every non-id load channel.
+message: Point the model at the id channel; the entry shape carries the rest.
 rule:
   pattern:
     context: |
@@ -12,10 +12,7 @@ rule:
 fix: |-
   fn listing_header(tool_name: &str) -> String {
       format!(
-          "The following skills are available, keyed by id. The [bracketed] \
-           tag opening each description is the skill's display name, never a \
-           valid id. Load a skill ONLY with the {tool_name} tool using its \
-           listed id; never use read_file to read SKILL.md and never construct \
-           a skill path:\n\n"
+          "The following skills are available. Load one with the {tool_name} \
+           tool using its id; do not read SKILL.md directly:\n\n"
       )
   }

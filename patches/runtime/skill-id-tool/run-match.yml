@@ -40,7 +40,7 @@ fix: |-
           return Ok(SkillOutput {
               success: false,
               tool_result: format!(
-                  "Skill id \"{}\" not found. The argument must be a listed six-character id, not a skill name. Available (id [name]): {}",
+                  "Skill id \"{}\" not found. Available: {}",
                   input.name, available
               ),
               skill_name: input.name.clone(),

@@ -10,17 +10,11 @@ rule:
         regex: ^DESCRIPTION$
         stopBy: end
 fix: |-
-  const DESCRIPTION: &str = r#"Load a specialized skill by its short id.
+  const DESCRIPTION: &str = r#"Load a specialized skill by its id.
 
-  The skill listing renders each entry as:
+  Every entry in the skill listing supplies one:
 
-  - id: <six hex chars>
-    description: [<display name>] <what the skill does>
-    Use when: <trigger conditions>
+  - id: 3f9a21
+    description: [example] What the skill does.
 
-  Pass the listed id exactly. The [bracketed] display name is not an id; a name
-  will never match.
-
-  Skills are loaded ONLY through this tool. Never use read_file to read SKILL.md,
-  never construct a skill path, and never guess an id. If a call fails, pick the
-  correct id from the "id [name]" pairs in the error response."#;
+  Pass that id. Do not read SKILL.md directly."#;

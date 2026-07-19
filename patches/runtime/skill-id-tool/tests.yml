@@ -10,8 +10,8 @@ fix: |-
       use crate::types::tool_metadata::ToolMetadata;
       let tool = SkillTool;
       let desc = tool.description_template();
-      assert!(desc.contains("short id"));
-      assert!(desc.contains("read_file"));
+      assert!(desc.contains("by its id"));
+      assert!(desc.contains("SKILL.md"));
       assert!(!desc.contains("skills %"));
   }
 
