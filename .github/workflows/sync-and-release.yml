@@ -2,7 +2,10 @@ name: Sync upstream and release
 
 on:
   schedule:
-    - cron: "17 3 * * *"
+    # Upstream (grokkybara[bot]) pushes "Synced from monorepo" irregularly —
+    # roughly once a day, no fixed wall-clock. Poll often; unchanged SHA is a
+    # ~15s no-op. Stagger off :00 to avoid the top-of-hour Actions pile-up.
+    - cron: "7/15 * * * *"
   workflow_dispatch:
     inputs:
       force_release:

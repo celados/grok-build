@@ -41,9 +41,9 @@ postcondition, and fails on unknown source drift.
 
 ## Release policy
 
-The scheduled GitHub Action checks `upstream/main` once daily. A changed
+The scheduled GitHub Action polls `upstream/main` every 15 minutes. A changed
 upstream SHA produces one new custom release; an unchanged SHA exits without
-building. The version-to-upstream mapping is recorded in
+building (~15s no-op). The version-to-upstream mapping is recorded in
 [versions.jsonl](versions.jsonl).
 
 If upstream changes an AST seam, the workflow stops and opens a maintenance

@@ -37,10 +37,15 @@ Both commands use releases from `celados/grok-build`.
 
 ## Upstream contract
 
-The scheduled workflow compares `upstream/main` with the last entry in
-`versions.jsonl`. A changed SHA triggers one patched build and release; an
-unchanged SHA is a no-op. Failed builds open an issue and do not advance the
-version mapping.
+The scheduled workflow polls `upstream/main` every 15 minutes and compares it
+with the last entry in `versions.jsonl`. A changed SHA triggers one patched
+build and release; an unchanged SHA is a no-op. Failed builds open an issue
+and do not advance the version mapping.
+
+Upstream cadence is not clock-aligned: `grokkybara[bot]` pushes
+"Synced from monorepo" when the monorepo export runs (observed ~14–30h
+between pushes, irregular UTC hours). Polling is the only hook we have —
+we do not control `xai-org/grok-build` webhooks.
 
 ## Runtime: read_file absolute path
 
