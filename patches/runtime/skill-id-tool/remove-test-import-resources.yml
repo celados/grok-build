@@ -1,0 +1,8 @@
+id: skill-id-tool-remove-test-import-resources
+language: Rust
+severity: error
+message: Remove imports used only by deleted name-based skill tests.
+rule:
+  kind: use_declaration
+  regex: "crate::types::resources::Resources"
+fix: ""

@@ -1,0 +1,16 @@
+id: skill-fuzzy-dedup-announcement-test-clean-break
+language: Rust
+severity: error
+message: Assert that the renamed persisted skill field is a clean break.
+rule:
+  kind: function_item
+  regex: "fn backward_compat_empty_json"
+fix: |-
+  fn backward_compat_empty_json() {
+      let loaded: AnnouncementState = serde_json::from_str(
+          r#"{"announced_skill_names":["legacy"]}"#,
+      )
+      .unwrap();
+      assert!(loaded.mcp_server_fingerprints.is_empty());
+      assert!(loaded.announced_skill_ids.is_empty());
+  }

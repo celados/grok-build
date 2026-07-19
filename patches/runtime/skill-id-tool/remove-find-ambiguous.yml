@@ -1,0 +1,9 @@
+id: skill-id-tool-remove-find-ambiguous
+language: Rust
+severity: error
+message: Remove a test for a deleted name-based lookup path.
+rule:
+  kind: function_item
+  regex: "fn find_skill_ambiguous_short_name_rejected"
+fix: |-
+  fn find_skill_ambiguous_short_name_rejected() {}

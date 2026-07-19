@@ -1,0 +1,19 @@
+id: skill-id-listing-header
+language: Rust
+severity: error
+message: Tell the model to load skills only through the id-based skill tool.
+rule:
+  pattern:
+    context: |
+      fn listing_header(_tool_name: &str) -> String {
+        $$$BODY
+      }
+    selector: function_item
+fix: |-
+  fn listing_header(tool_name: &str) -> String {
+      format!(
+          "The following skills are available. Load a skill ONLY with the \
+           {tool_name} tool using its listed id; never use read_file to read \
+           SKILL.md and never construct a skill path:\n\n"
+      )
+  }

@@ -1,0 +1,15 @@
+id: skill-fuzzy-dedup-remove-name-validator-import
+language: Rust
+severity: error
+message: Remove the name validator import after deleting name-shadow rekeying.
+rule:
+  pattern: |
+    use xai_grok_tools::implementations::skills::discovery::{
+        find_command_paths, find_skill_md_paths, find_skill_paths, is_valid_skill_name,
+        normalize_skill_name, parse_skill_files, scan_md_files, walk_for_skill_md,
+    };
+fix: |-
+  use xai_grok_tools::implementations::skills::discovery::{
+      find_command_paths, find_skill_md_paths, find_skill_paths,
+      normalize_skill_name, parse_skill_files, scan_md_files, walk_for_skill_md,
+  };

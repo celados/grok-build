@@ -1,0 +1,21 @@
+id: skill-id-tool-description
+language: Rust
+severity: error
+message: Replace the dead skill-list template with the id-only loading protocol.
+rule:
+  all:
+    - kind: const_item
+    - has:
+        field: name
+        regex: ^DESCRIPTION$
+        stopBy: end
+fix: |-
+  const DESCRIPTION: &str = r#"Load a specialized skill by its short id.
+
+  The skill listing supplies each skill's name, six-character id, description, and
+  absolute path for context only. Call this tool with the listed id to load the
+  skill content.
+
+  Skills are loaded ONLY through this tool. Never use read_file to read SKILL.md,
+  never construct a skill path, and never guess an id. If an id is not listed,
+  use the available name [id] pairs from the error response."#;

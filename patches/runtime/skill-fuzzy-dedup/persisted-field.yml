@@ -1,0 +1,17 @@
+id: skill-fuzzy-dedup-persisted-field
+language: Rust
+severity: error
+message: Rename persisted announcement state from names to ids for a clean migration.
+rule:
+  all:
+    - kind: field_identifier
+    - regex: ^announced_skill_names$
+    - inside:
+        pattern:
+          context: |
+            pub struct AnnouncementState {
+              $$$FIELDS
+            }
+          selector: struct_item
+        stopBy: end
+fix: announced_skill_ids

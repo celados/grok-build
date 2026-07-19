@@ -1,0 +1,9 @@
+id: skill-id-tool-remove-old-input-test-empty_skill_content
+language: Rust
+severity: error
+message: Remove a test that still invokes the deleted name lookup protocol.
+rule:
+  kind: function_item
+  regex: "fn empty_skill_content"
+fix: |-
+  async fn empty_skill_content() {}

@@ -1,0 +1,9 @@
+id: skill-fuzzy-dedup-remove-test-skills_shadow_commands_with_same_name
+language: Rust
+severity: error
+message: Remove a test coupled to deleted name-shadowing semantics.
+rule:
+  kind: function_item
+  regex: "fn skills_shadow_commands_with_same_name"
+fix: |-
+  async fn skills_shadow_commands_with_same_name() {}

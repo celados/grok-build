@@ -1,0 +1,25 @@
+id: skill-fuzzy-dedup-agent
+language: Rust
+severity: error
+message: Deduplicate startup skills by name and full-file character count.
+rule:
+  pattern:
+    context: |
+      fn dedupe_skills(skills: Vec<SkillInfo>) -> Vec<SkillInfo> {
+        $$$BODY
+      }
+    selector: function_item
+fix: |-
+  fn dedupe_skills(skills: Vec<SkillInfo>) -> Vec<SkillInfo> {
+      let mut seen = HashSet::new();
+      let mut deduped = Vec::with_capacity(skills.len());
+      for skill in skills {
+          if let Some(chars_length) = skill.chars_length()
+              && !seen.insert((skill.name.clone(), chars_length))
+          {
+              continue;
+          }
+          deduped.push(skill);
+      }
+      deduped
+  }

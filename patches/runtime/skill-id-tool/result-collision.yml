@@ -1,0 +1,20 @@
+id: skill-id-tool-result-collision
+language: Rust
+severity: error
+message: Replace the legacy ambiguous-name result with fail-closed id collisions.
+rule:
+  pattern:
+    context: |
+      enum FindSkillResult<'a> {
+        $$$BODY
+      }
+    selector: enum_item
+fix: |-
+  enum FindSkillResult<'a> {
+      /// Exactly one id match found.
+      Found(&'a SkillInfo),
+      /// Multiple skills share the six-character id; fail closed.
+      Collision(Vec<String>),
+      /// No id matched.
+      NotFound,
+  }

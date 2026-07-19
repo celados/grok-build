@@ -1,0 +1,20 @@
+id: skill-id-tool-register-plan-no-subagents
+language: Rust
+severity: error
+message: Register the id-based skill tool in the no-subagents plan toolset.
+rule:
+  all:
+    - pattern: "vec![$$$ITEMS]"
+    - has:
+        regex: grok_build::AskUserQuestionTool
+        stopBy: end
+    - inside:
+        pattern:
+          context: |
+            fn grok_build_plan_no_subagents_toolset() -> ToolServerConfig {
+              $$$BODY
+            }
+          selector: function_item
+        stopBy: end
+fix: |-
+  vec![$$$ITEMS (&opencode::OpenCodeSkillTool).into()]

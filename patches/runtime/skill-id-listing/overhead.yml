@@ -1,0 +1,27 @@
+id: skill-id-listing-overhead
+language: Rust
+severity: error
+message: Account for id syntax in budgeted markdown listings.
+rule:
+  pattern:
+    context: |
+      fn overhead(&self) -> usize {
+        $$$BODY
+      }
+    selector: function_item
+fix: |-
+  fn overhead(&self) -> usize {
+      let base = "- ".len()
+          + self.name.len()
+          + " [".len()
+          + self.id.len()
+          + "]: ".len()
+          + "\n  Absolute path: ".len()
+          + self.display_path.len()
+          + "\n".len();
+      if self.when_to_use.is_some() {
+          base + "  Use when: ".len() + "\n".len()
+      } else {
+          base
+      }
+  }

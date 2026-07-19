@@ -1,0 +1,8 @@
+id: skill-fuzzy-dedup-remove-doc-7
+language: Rust
+severity: error
+message: Remove the remaining stale re-key validation documentation fragment.
+rule:
+  kind: line_comment
+  regex: "a true duplicate"
+fix: ""

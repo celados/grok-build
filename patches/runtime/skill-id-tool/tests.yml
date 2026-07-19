@@ -1,0 +1,39 @@
+id: skill-id-tool-tests
+language: Rust
+severity: error
+message: Replace name-based tests with id and collision coverage.
+rule:
+  kind: function_item
+  regex: "fn tool_metadata"
+fix: |-
+  fn tool_metadata() {
+      use crate::types::tool_metadata::ToolMetadata;
+      let tool = SkillTool;
+      let desc = tool.description_template();
+      assert!(desc.contains("short id"));
+      assert!(desc.contains("read_file"));
+      assert!(!desc.contains("skills %"));
+  }
+
+  #[test]
+  fn find_skill_by_id_and_collision() {
+      let skills = vec![
+          make_test_skill("commit", SkillScope::User, "/path/a"),
+          make_test_skill("build", SkillScope::Local, "/path/b"),
+      ];
+      let id = skills[0].short_id();
+      assert!(matches!(find_skill(&id, &skills), FindSkillResult::Found(s) if s.name == "commit"));
+      assert!(matches!(find_skill("not-an-id", &skills), FindSkillResult::NotFound));
+
+      let collisions = vec![
+          make_test_skill("commit", SkillScope::Local, "/path/local"),
+          make_test_skill("commit", SkillScope::User, "/path/local"),
+      ];
+      match find_skill(&collisions[0].short_id(), &collisions) {
+          FindSkillResult::Collision(items) => {
+              assert!(items.contains(&"commit (/path/local)".to_string()));
+              assert_eq!(items.len(), 2);
+          }
+          other => panic!("Expected Collision, got {other:?}"),
+      }
+  }

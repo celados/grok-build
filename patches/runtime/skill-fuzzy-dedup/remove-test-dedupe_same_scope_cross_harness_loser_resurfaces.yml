@@ -1,0 +1,9 @@
+id: skill-fuzzy-dedup-remove-test-dedupe_same_scope_cross_harness_loser_resurfaces
+language: Rust
+severity: error
+message: Remove a test coupled to deleted name-shadowing semantics.
+rule:
+  kind: function_item
+  regex: "fn dedupe_same_scope_cross_harness_loser_resurfaces"
+fix: |-
+  fn dedupe_same_scope_cross_harness_loser_resurfaces() {}

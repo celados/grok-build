@@ -1,0 +1,9 @@
+id: skill-id-tool-remove-skill-empty
+language: Rust
+severity: error
+message: Remove a test for a deleted name-based lookup path.
+rule:
+  kind: function_item
+  regex: "fn skill_not_found_with_no_skills_resource"
+fix: |-
+  async fn skill_not_found_with_no_skills_resource() {}

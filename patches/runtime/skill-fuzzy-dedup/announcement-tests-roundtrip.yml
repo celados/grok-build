@@ -1,0 +1,29 @@
+id: skill-fuzzy-dedup-announcement-test-roundtrip
+language: Rust
+severity: error
+message: Update announcement persistence tests to the id field.
+rule:
+  kind: function_item
+  regex: "fn serde_round_trip"
+fix: |-
+  fn serde_round_trip() {
+      let state = AnnouncementState {
+          mcp_server_fingerprints: HashMap::from([(
+              "github".to_string(),
+              McpServerFingerprint {
+                  tool_count: 5,
+                  description_hash: 12345678,
+                  tool_names_hash: 87654321,
+              },
+          )]),
+          announced_skill_ids: HashSet::from(["abc123".to_string(), "def456".to_string()]),
+      };
+      let json = serde_json::to_string(&state).unwrap();
+      let loaded: AnnouncementState = serde_json::from_str(&json).unwrap();
+      assert_eq!(loaded.mcp_server_fingerprints.len(), 1);
+      assert_eq!(loaded.announced_skill_ids.len(), 2);
+      let fp = &loaded.mcp_server_fingerprints["github"];
+      assert_eq!(fp.tool_count, 5);
+      assert_eq!(fp.description_hash, 12345678);
+      assert_eq!(fp.tool_names_hash, 87654321);
+  }

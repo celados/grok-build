@@ -1,0 +1,9 @@
+id: skill-fuzzy-dedup-remove-test-dedupe_rekeyed_name_shadows_lower_scope_claimant
+language: Rust
+severity: error
+message: Remove a test coupled to deleted name-shadowing semantics.
+rule:
+  kind: function_item
+  regex: "fn dedupe_rekeyed_name_shadows_lower_scope_claimant"
+fix: |-
+  fn dedupe_rekeyed_name_shadows_lower_scope_claimant() {}

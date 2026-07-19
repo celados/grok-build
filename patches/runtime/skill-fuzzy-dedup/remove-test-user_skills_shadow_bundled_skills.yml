@@ -1,0 +1,9 @@
+id: skill-fuzzy-dedup-remove-test-user_skills_shadow_bundled_skills
+language: Rust
+severity: error
+message: Remove a test coupled to deleted name-shadowing semantics.
+rule:
+  kind: function_item
+  regex: "fn user_skills_shadow_bundled_skills"
+fix: |-
+  async fn user_skills_shadow_bundled_skills() {}

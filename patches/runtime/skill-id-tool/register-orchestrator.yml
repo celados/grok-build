@@ -1,0 +1,20 @@
+id: skill-id-tool-register-orchestrator
+language: Rust
+severity: error
+message: Register the id-based skill tool in the orchestrator toolset.
+rule:
+  all:
+    - pattern: "vec![$$$ITEMS]"
+    - has:
+        regex: grok_build::UpdateGoalTool
+        stopBy: end
+    - inside:
+        pattern:
+          context: |
+            fn orchestrator_toolset() -> ToolServerConfig {
+              $$$BODY
+            }
+          selector: function_item
+        stopBy: end
+fix: |-
+  vec![$$$ITEMS (&opencode::OpenCodeSkillTool).into()]

@@ -1,0 +1,9 @@
+id: skill-id-tool-remove-old-input-test-works_through_erased_interface
+language: Rust
+severity: error
+message: Remove a test that still invokes the deleted name lookup protocol.
+rule:
+  kind: function_item
+  regex: "fn works_through_erased_interface"
+fix: |-
+  async fn works_through_erased_interface() {}

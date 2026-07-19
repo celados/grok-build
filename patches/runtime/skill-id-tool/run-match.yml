@@ -1,0 +1,51 @@
+id: skill-id-tool-run-match
+language: Rust
+severity: error
+message: Handle id success, collision, and not-found cases without name fallback.
+rule:
+  pattern: |
+    let skill = match find_skill(&input.name, &available_skills) {
+      $$$ARMS
+    };
+fix: |-
+  let skill = match find_skill(&input.name, &available_skills) {
+      FindSkillResult::Found(s) => s.clone(),
+      FindSkillResult::Collision(collisions) => {
+          return Ok(SkillOutput {
+              success: false,
+              tool_result: format!(
+                  "Skill id '{}' collides -- choose a unique id. Collisions: {}",
+                  input.name,
+                  collisions.join(", ")
+              ),
+              skill_name: input.name.clone(),
+              skill_message: None,
+              error: Some(format!(
+                  "Skill id '{}' collides: {}",
+                  input.name,
+                  collisions.join(", ")
+              )),
+          });
+      }
+      FindSkillResult::NotFound => {
+          let names: Vec<String> = available_skills
+              .iter()
+              .map(|s| format!("{} [{}]", s.name, s.short_id()))
+              .collect();
+          let available = if names.is_empty() {
+              "none".to_string()
+          } else {
+              names.join(", ")
+          };
+          return Ok(SkillOutput {
+              success: false,
+              tool_result: format!(
+                  "Skill id \"{}\" not found. Available skills: {}",
+                  input.name, available
+              ),
+              skill_name: input.name.clone(),
+              skill_message: None,
+              error: Some(format!("Skill id \"{}\" not found", input.name)),
+          });
+      }
+  };

@@ -1,0 +1,27 @@
+id: skill-id-listing-format
+language: Rust
+severity: error
+message: Render name, id, description, triggers, and retained absolute path.
+rule:
+  pattern:
+    context: |
+      fn format(&self, func_desc: &str, desc_budget: usize, wtu_budget: usize) -> String {
+        $$$BODY
+      }
+    selector: function_item
+fix: |-
+  fn format(&self, func_desc: &str, desc_budget: usize, wtu_budget: usize) -> String {
+      let desc = truncate_str_with_marker(func_desc, desc_budget);
+      if let Some(wtu) = self.when_to_use {
+          let wtu = truncate_str_with_marker(strip_leading_trigger_prefix(wtu), wtu_budget);
+          format!(
+              "- {} [{}]: {}\n  Use when: {}\n  Absolute path: {}",
+              self.name, self.id, desc, wtu, self.display_path
+          )
+      } else {
+          format!(
+              "- {} [{}]: {}\n  Absolute path: {}",
+              self.name, self.id, desc, self.display_path
+          )
+      }
+  }

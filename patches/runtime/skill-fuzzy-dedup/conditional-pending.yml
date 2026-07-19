@@ -1,0 +1,16 @@
+id: skill-fuzzy-dedup-conditional-pending
+language: Rust
+severity: error
+message: Identify pending conditional skills by stable id.
+rule:
+  pattern:
+    context: |
+      pub(super) fn is_pending(&self, s: &SkillInfo) -> bool {
+        $$$BODY
+      }
+    selector: function_item
+fix: |-
+  pub(super) fn is_pending(&self, s: &SkillInfo) -> bool {
+      s.paths.as_ref().is_some_and(|p| !p.is_empty())
+          && !self.activated.contains(&s.short_id())
+  }

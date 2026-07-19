@@ -1,0 +1,18 @@
+id: skill-fuzzy-dedup-announcement-id
+language: Rust
+severity: error
+message: Track announced skills by stable id so same-name skills remain distinct.
+rule:
+  all:
+    - pattern: "announced.insert(s.dedup_key())"
+    - inside:
+        pattern:
+          context: |
+            pub(super) fn format_announcement(
+              $$$ARGS
+            ) -> Option<String> {
+              $$$BODY
+            }
+          selector: function_item
+        stopBy: end
+fix: announced.insert(s.short_id())

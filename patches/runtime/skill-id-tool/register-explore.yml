@@ -1,0 +1,20 @@
+id: skill-id-tool-register-explore
+language: Rust
+severity: error
+message: Register the id-based skill tool in the explore toolset.
+rule:
+  all:
+    - pattern: "vec![$$$ITEMS]"
+    - has:
+        regex: grok_build::GrepTool
+        stopBy: end
+    - inside:
+        pattern:
+          context: |
+            fn explore_toolset() -> ToolServerConfig {
+              $$$BODY
+            }
+          selector: function_item
+        stopBy: end
+fix: |-
+  vec![$$$ITEMS (&opencode::OpenCodeSkillTool).into()]

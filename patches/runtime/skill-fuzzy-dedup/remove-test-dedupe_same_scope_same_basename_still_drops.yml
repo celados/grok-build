@@ -1,0 +1,9 @@
+id: skill-fuzzy-dedup-remove-test-dedupe_same_scope_same_basename_still_drops
+language: Rust
+severity: error
+message: Remove a test coupled to deleted name-shadowing semantics.
+rule:
+  kind: function_item
+  regex: "fn dedupe_same_scope_same_basename_still_drops"
+fix: |-
+  fn dedupe_same_scope_same_basename_still_drops() {}

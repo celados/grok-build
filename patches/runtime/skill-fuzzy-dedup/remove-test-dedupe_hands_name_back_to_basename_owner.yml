@@ -1,0 +1,9 @@
+id: skill-fuzzy-dedup-remove-test-dedupe_hands_name_back_to_basename_owner
+language: Rust
+severity: error
+message: Remove a test coupled to deleted name-shadowing semantics.
+rule:
+  kind: function_item
+  regex: "fn dedupe_hands_name_back_to_basename_owner"
+fix: |-
+  fn dedupe_hands_name_back_to_basename_owner() {}

@@ -1,0 +1,14 @@
+id: skill-fuzzy-dedup-remove-rekey-helper
+language: Rust
+severity: error
+message: Remove the obsolete startup name-shadow rekey helper.
+rule:
+  pattern:
+    context: |
+      fn rekey_to_dir_basename(
+        $$$ARGS
+      ) -> bool {
+        $$$BODY
+      }
+    selector: function_item
+fix: ""

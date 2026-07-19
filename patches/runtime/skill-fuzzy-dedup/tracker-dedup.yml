@@ -1,0 +1,30 @@
+id: skill-fuzzy-dedup-tracker
+language: Rust
+severity: error
+message: Deduplicate tracker display projections by name and full-file character count.
+rule:
+  pattern:
+    context: |
+      fn dedupe_by_canonical_path_and_name(
+        $$$ARGS
+      ) -> Vec<SkillInfo> {
+        $$$BODY
+      }
+    selector: function_item
+fix: |-
+  fn dedupe_by_canonical_path_and_name(
+      primary: &[SkillInfo],
+      secondary: &[SkillInfo],
+  ) -> Vec<SkillInfo> {
+      let mut seen = HashSet::new();
+      let mut result = Vec::with_capacity(primary.len() + secondary.len());
+      for skill in primary.iter().chain(secondary.iter()) {
+          if let Some(chars_length) = skill.chars_length()
+              && !seen.insert((skill.name.clone(), chars_length))
+          {
+              continue;
+          }
+          result.push(skill.clone());
+      }
+      result
+  }

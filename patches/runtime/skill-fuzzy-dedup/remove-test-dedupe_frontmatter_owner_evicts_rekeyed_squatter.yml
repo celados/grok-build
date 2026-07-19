@@ -1,0 +1,9 @@
+id: skill-fuzzy-dedup-remove-test-dedupe_frontmatter_owner_evicts_rekeyed_squatter
+language: Rust
+severity: error
+message: Remove a test coupled to deleted name-shadowing semantics.
+rule:
+  kind: function_item
+  regex: "fn dedupe_frontmatter_owner_evicts_rekeyed_squatter"
+fix: |-
+  fn dedupe_frontmatter_owner_evicts_rekeyed_squatter() {}

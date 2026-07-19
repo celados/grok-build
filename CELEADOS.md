@@ -60,3 +60,26 @@ two strings. The description seam uses the templated param name
 `${{ params.read.target_file }}` (upstream: "Template hardcoded param
 names in server-native tool descriptions"); the schema param name stays
 `target_file`. Wording matches Claude Code FileReadTool.
+
+## Runtime: hash-id skill tool
+
+The upstream skill listing exposes absolute paths but does not provide a skill
+tool. These groups make model-facing skill loading deterministic without
+teaching the model to synthesize paths:
+
+- `patches/runtime/skill-id-base/`: stable six-hex IDs from the existing
+  FNV-1a-32 helper (low 24 bits) and full-file character counts.
+- `patches/runtime/skill-id-tool/`: registers the OpenCode skill tool in every
+  skill-discovering toolset, exposes `id`, removes name fallback, and fails
+  closed on ID collisions.
+- `patches/runtime/skill-id-listing/`: renders `name [id]` in markdown entries,
+  including the names-only budget tier, while retaining descriptions, triggers,
+  and absolute paths as context.
+- `patches/runtime/skill-fuzzy-dedup/`: applies deliberate `[name,
+  chars_length]` fuzzy dedup, migrates announcement/conditional/persisted state
+  keys to IDs, and removes obsolete name-shadowing code.
+
+Groups ①–③ depend only on the shared ⓪ ID helper and are otherwise independently
+applicable/revertible. All rules are required seams: upstream drift stops the
+build instead of silently producing a partial skill protocol. XML compatibility
+listings remain outside this markdown-mode patch contract.

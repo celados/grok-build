@@ -1,0 +1,9 @@
+id: skill-id-listing-remove-old-entry-test
+language: Rust
+severity: error
+message: Remove an upstream literal-only test superseded by id-aware coverage.
+rule:
+  kind: function_item
+  regex: "fn proportional_budgets_covers_all_branches"
+fix: |-
+  fn proportional_budgets_covers_all_branches() {}

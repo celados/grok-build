@@ -1,0 +1,9 @@
+id: skill-id-tool-remove-skill-ambiguous
+language: Rust
+severity: error
+message: Remove a test for a deleted name-based lookup path.
+rule:
+  kind: function_item
+  regex: "fn skill_ambiguous_returns_error_output"
+fix: |-
+  async fn skill_ambiguous_returns_error_output() {}

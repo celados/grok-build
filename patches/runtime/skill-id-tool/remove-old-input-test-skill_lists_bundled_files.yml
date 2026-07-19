@@ -1,0 +1,9 @@
+id: skill-id-tool-remove-old-input-test-skill_lists_bundled_files
+language: Rust
+severity: error
+message: Remove a test that still invokes the deleted name lookup protocol.
+rule:
+  kind: function_item
+  regex: "fn skill_lists_bundled_files"
+fix: |-
+  async fn skill_lists_bundled_files() {}

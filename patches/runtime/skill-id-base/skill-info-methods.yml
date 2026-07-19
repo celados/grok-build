@@ -1,0 +1,42 @@
+id: skill-id-base-methods
+language: Rust
+severity: error
+message: Add stable short skill ids and file character lengths.
+rule:
+  pattern:
+    context: |
+      impl SkillInfo {
+        $$$BODY
+      }
+    selector: impl_item
+fix: |-
+  impl SkillInfo {
+      $$$BODY
+
+      /// Stable six-character id derived from the canonical skill path.
+      /// FNV-1a-32("/tmp/skill/SKILL.md") = 0x93750696; low 24 bits = 750696.
+      pub fn short_id(&self) -> String {
+          let bytes = dunce::canonicalize(&self.path)
+              .unwrap_or_else(|_| std::path::PathBuf::from(&self.path));
+          let hash = crate::util::hash::fnv1a_32(bytes.to_string_lossy().as_bytes());
+          format!("{:06x}", hash & 0x00ff_ffff)
+      }
+
+      /// Character count of the complete SKILL.md; unreadable files stay distinct.
+      pub fn chars_length(&self) -> Option<usize> {
+          std::fs::read_to_string(&self.path)
+              .ok()
+              .map(|content| content.chars().count())
+      }
+
+  }
+
+  #[cfg(test)]
+  mod short_id_tests {
+      #[test]
+      fn fnv_vector_low_24_bits() {
+          let hash = crate::util::hash::fnv1a_32(b"/tmp/skill/SKILL.md");
+          assert_eq!(hash, 0x9375_0696);
+          assert_eq!(hash & 0x00ff_ffff, 0x75_0696);
+      }
+  }

@@ -1,0 +1,9 @@
+id: skill-fuzzy-dedup-remove-test-copied_skill_dir_with_stale_frontmatter_name_surfaces_both
+language: Rust
+severity: error
+message: Remove a test coupled to deleted name-shadowing semantics.
+rule:
+  kind: function_item
+  regex: "fn copied_skill_dir_with_stale_frontmatter_name_surfaces_both"
+fix: |-
+  async fn copied_skill_dir_with_stale_frontmatter_name_surfaces_both() {}

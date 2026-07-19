@@ -1,0 +1,9 @@
+id: skill-id-tool-remove-old-input-test-ten_file_cap
+language: Rust
+severity: error
+message: Remove a test that still invokes the deleted name lookup protocol.
+rule:
+  kind: function_item
+  regex: "fn ten_file_cap"
+fix: |-
+  async fn ten_file_cap() {}

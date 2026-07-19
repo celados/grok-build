@@ -1,0 +1,9 @@
+id: skill-fuzzy-dedup-remove-test-dedupe_challenger_without_basename_claim_is_still_shadowed
+language: Rust
+severity: error
+message: Remove a test coupled to deleted name-shadowing semantics.
+rule:
+  kind: function_item
+  regex: "fn dedupe_challenger_without_basename_claim_is_still_shadowed"
+fix: |-
+  fn dedupe_challenger_without_basename_claim_is_still_shadowed() {}

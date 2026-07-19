@@ -1,0 +1,15 @@
+id: skill-fuzzy-dedup-persist-read
+language: Rust
+severity: error
+message: Restore the renamed persisted skill id field.
+rule:
+  pattern: |
+    persisted_announcement_state
+      .as_ref()
+      .filter(|s| !s.announced_skill_names.is_empty())
+      .map(|s| s.announced_skill_names.clone())
+fix: |-
+  persisted_announcement_state
+      .as_ref()
+      .filter(|s| !s.announced_skill_ids.is_empty())
+      .map(|s| s.announced_skill_ids.clone())

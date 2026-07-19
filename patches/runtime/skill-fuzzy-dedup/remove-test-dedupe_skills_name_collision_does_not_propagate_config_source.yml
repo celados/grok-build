@@ -1,0 +1,27 @@
+id: skill-fuzzy-dedup-remove-test-dedupe_skills_name_collision_does_not_propagate_config_source
+language: Rust
+severity: error
+message: Replace name-shadowing coverage with fuzzy identity coverage.
+rule:
+  kind: function_item
+  regex: "fn dedupe_skills_name_collision_does_not_propagate_config_source"
+fix: |-
+  fn dedupe_skills_name_collision_does_not_propagate_config_source() {
+      let tmp = tempfile::tempdir().unwrap();
+      let a = tmp.path().join("a/SKILL.md");
+      let b = tmp.path().join("b/SKILL.md");
+      let c = tmp.path().join("c/SKILL.md");
+      std::fs::create_dir_all(a.parent().unwrap()).unwrap();
+      std::fs::create_dir_all(b.parent().unwrap()).unwrap();
+      std::fs::create_dir_all(c.parent().unwrap()).unwrap();
+      std::fs::write(&a, "same").unwrap();
+      std::fs::write(&b, "same").unwrap();
+      std::fs::write(&c, "different").unwrap();
+
+      let deduped = dedupe_skills(vec![
+          make_skill("same-name", a.to_str().unwrap()),
+          make_skill("same-name", b.to_str().unwrap()),
+          make_skill("same-name", c.to_str().unwrap()),
+      ]);
+      assert_eq!(deduped.len(), 2);
+  }

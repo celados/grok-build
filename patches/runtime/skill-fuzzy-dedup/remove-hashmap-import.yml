@@ -1,0 +1,7 @@
+id: skill-fuzzy-dedup-remove-hashmap-import
+language: Rust
+severity: error
+message: Remove the now-unused HashMap import after deleting rekey logic.
+rule:
+  pattern: "use std::collections::{HashMap, HashSet};"
+fix: "use std::collections::HashSet;"

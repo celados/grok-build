@@ -1,0 +1,26 @@
+id: skill-id-listing-test-xml-overhead
+language: Rust
+severity: error
+message: Update XML overhead regression literals for the id field.
+rule:
+  kind: function_item
+  regex: "fn xml_overhead_includes_em_dash_separator"
+fix: |-
+  fn xml_overhead_includes_em_dash_separator() {
+      let without = SkillEntry {
+          name: "s",
+          description: "desc",
+          when_to_use: None,
+          display_path: "/p/SKILL.md".to_owned(),
+          id: "testid".to_owned(),
+      };
+      let with_wtu = SkillEntry {
+          name: "s",
+          description: "desc",
+          when_to_use: Some("trigger"),
+          display_path: "/p/SKILL.md".to_owned(),
+          id: "testid".to_owned(),
+      };
+      let diff = with_wtu.overhead_xml() - without.overhead_xml();
+      assert_eq!(diff, " \u{2014} Use when: ".len());
+  }

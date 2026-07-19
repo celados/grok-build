@@ -73,6 +73,91 @@ patches/release-installer.yml crates/codegen/xai-grok-update/src/auto_update.rs
 patches/runtime/deleted-cwd/regression.yml crates/codegen/xai-grok-tools/src/computer/local/terminal.rs
 patches/runtime/bash-workdir-tilde/regression.yml crates/codegen/xai-grok-tools/src/implementations/opencode/bash/mod.rs
 patches/runtime/prompt-background-tasks/regression.yml crates/codegen/xai-grok-agent/src/prompt/template.rs
+patches/runtime/skill-id-base/skill-info-methods.yml crates/codegen/xai-grok-tools/src/implementations/skills/types.rs
+patches/runtime/skill-id-tool/description.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/input-id.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/result-collision.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/find-by-id.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/run-match.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-format-name-import.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/tests.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-find-short.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-find-qualified.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-find-ambiguous.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-find-qualified-ambiguous.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-skill-ambiguous.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-skill-notfound.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-skill-empty.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-test-import-testctx.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-test-import-resources.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-test-import-tempdir.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-old-input-test-skill_loads_content_from_file.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-old-input-test-skill_body_reaches_prompt_format.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-old-input-test-skill_lists_bundled_files.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-old-input-test-skill_file_not_found_returns_error.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-old-input-test-works_through_erased_interface.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-old-input-test-frontmatter_stripping.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-old-input-test-skill_message_xml_structure.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-old-input-test-base_directory_in_output.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-old-input-test-skill_with_no_bundled_files.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-old-input-test-empty_skill_content.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/remove-old-input-test-ten_file_cap.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
+patches/runtime/skill-id-tool/register-default.yml crates/codegen/xai-grok-agent/src/config.rs
+patches/runtime/skill-id-tool/register-plan.yml crates/codegen/xai-grok-agent/src/config.rs
+patches/runtime/skill-id-tool/register-concise.yml crates/codegen/xai-grok-agent/src/config.rs
+patches/runtime/skill-id-tool/register-hashline.yml crates/codegen/xai-grok-agent/src/config.rs
+patches/runtime/skill-id-tool/register-codex.yml crates/codegen/xai-grok-agent/src/config.rs
+patches/runtime/skill-id-tool/register-explore.yml crates/codegen/xai-grok-agent/src/config.rs
+patches/runtime/skill-id-tool/register-plan-readonly.yml crates/codegen/xai-grok-agent/src/config.rs
+patches/runtime/skill-id-tool/register-orchestrator.yml crates/codegen/xai-grok-agent/src/config.rs
+patches/runtime/skill-id-tool/register-plan-no-subagents.yml crates/codegen/xai-grok-agent/src/config.rs
+patches/runtime/skill-id-tool/register-ask-user.yml crates/codegen/xai-grok-agent/src/config.rs
+patches/runtime/skill-id-tool/register-grok-computer.yml crates/codegen/xai-grok-agent/src/config.rs
+patches/runtime/skill-id-listing/header.yml crates/codegen/xai-grok-tools/src/types/skill_discovery_tracker/listing.rs
+patches/runtime/skill-id-listing/entry-struct.yml crates/codegen/xai-grok-tools/src/types/skill_discovery_tracker/listing.rs
+patches/runtime/skill-id-listing/build-entry.yml crates/codegen/xai-grok-tools/src/types/skill_discovery_tracker/listing.rs
+patches/runtime/skill-id-listing/format.yml crates/codegen/xai-grok-tools/src/types/skill_discovery_tracker/listing.rs
+patches/runtime/skill-id-listing/name-only.yml crates/codegen/xai-grok-tools/src/types/skill_discovery_tracker/listing.rs
+patches/runtime/skill-id-listing/overhead.yml crates/codegen/xai-grok-tools/src/types/skill_discovery_tracker/listing.rs
+patches/runtime/skill-id-listing/regression.yml crates/codegen/xai-grok-tools/src/types/skill_discovery_tracker/listing.rs
+patches/runtime/skill-id-listing/test-entry-overhead.yml crates/codegen/xai-grok-tools/src/types/skill_discovery_tracker/listing.rs
+patches/runtime/skill-id-listing/test-entry-xml-overhead.yml crates/codegen/xai-grok-tools/src/types/skill_discovery_tracker/listing.rs
+patches/runtime/skill-id-listing/remove-old-entry-test.yml crates/codegen/xai-grok-tools/src/types/skill_discovery_tracker/listing.rs
+patches/runtime/skill-fuzzy-dedup/agent-dedup.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/tracker-dedup.yml crates/codegen/xai-grok-tools/src/types/skill_discovery_tracker/mod.rs
+patches/runtime/skill-fuzzy-dedup/announcement-id.yml crates/codegen/xai-grok-tools/src/types/skill_discovery_tracker/listing.rs
+patches/runtime/skill-fuzzy-dedup/conditional-pending.yml crates/codegen/xai-grok-tools/src/types/skill_discovery_tracker/conditional.rs
+patches/runtime/skill-fuzzy-dedup/conditional-activate.yml crates/codegen/xai-grok-tools/src/types/skill_discovery_tracker/conditional.rs
+patches/runtime/skill-fuzzy-dedup/persisted-field.yml crates/codegen/xai-grok-shell/src/session/announcement_state.rs
+patches/runtime/skill-fuzzy-dedup/persist-write.yml crates/codegen/xai-grok-shell/src/session/acp_session_impl/mcp.rs
+patches/runtime/skill-fuzzy-dedup/persist-read.yml crates/codegen/xai-grok-shell/src/session/acp_session_impl/spawn.rs
+patches/runtime/skill-fuzzy-dedup/remove-rekey-helper.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-hashmap-import.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-name-validator-import.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/announcement-tests-roundtrip.yml crates/codegen/xai-grok-shell/src/session/announcement_state.rs
+patches/runtime/skill-fuzzy-dedup/announcement-tests-clean-break.yml crates/codegen/xai-grok-shell/src/session/announcement_state.rs
+patches/runtime/skill-fuzzy-dedup/remove-test-list_skills_auto_and_config_overlap_keeps_config_toml_source.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-test-dedupe_skills_name_collision_does_not_propagate_config_source.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-test-user_skills_shadow_bundled_skills.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-test-skills_shadow_commands_with_same_name.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-test-dedupe_rekeys_same_scope_name_collision_to_dir_basename.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-test-dedupe_hands_name_back_to_basename_owner.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-test-dedupe_rekeys_every_same_scope_claimant.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-test-dedupe_challenger_without_basename_claim_is_still_shadowed.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-test-dedupe_rekeyed_name_shadows_lower_scope_claimant.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-test-dedupe_same_scope_cross_harness_loser_resurfaces.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-test-dedupe_frontmatter_owner_evicts_rekeyed_squatter.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-test-dedupe_cross_scope_shadowing_unchanged.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-test-dedupe_same_scope_same_basename_still_drops.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-test-copied_skill_dir_with_stale_frontmatter_name_surfaces_both.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-doc-1.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-doc-2.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-doc-3.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-doc-4.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-doc-5.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-doc-6.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-doc-7.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
+patches/runtime/skill-fuzzy-dedup/remove-doc-rekey.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
 "
 
 RUNTIME_CWD_PATCH="patches/runtime/deleted-cwd/recover.yml"
@@ -231,15 +316,30 @@ fi
 
 (
   cd "$SOURCES_DIR"
-  cargo fmt -p xai-grok-shell -p xai-grok-workspace -p xai-grok-update -- --check
   # ast-grep preserves metavariable indentation when it inserts the regression
   # test; format only the owned patched files so unrelated upstream files stay untouched.
   rustfmt --edition 2024 \
     crates/codegen/xai-grok-tools/src/computer/local/terminal.rs \
-    crates/codegen/xai-grok-tools/src/implementations/opencode/bash/mod.rs
+    crates/codegen/xai-grok-tools/src/implementations/opencode/bash/mod.rs \
+    crates/codegen/xai-grok-tools/src/implementations/skills/types.rs \
+    crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs \
+    crates/codegen/xai-grok-tools/src/types/skill_discovery_tracker/listing.rs \
+    crates/codegen/xai-grok-tools/src/types/skill_discovery_tracker/mod.rs \
+    crates/codegen/xai-grok-tools/src/types/skill_discovery_tracker/conditional.rs \
+    crates/codegen/xai-grok-agent/src/config.rs \
+    crates/codegen/xai-grok-agent/src/prompt/skills.rs \
+    crates/codegen/xai-grok-shell/src/session/announcement_state.rs \
+    crates/codegen/xai-grok-shell/src/session/acp_session_impl/mcp.rs \
+    crates/codegen/xai-grok-shell/src/session/acp_session_impl/spawn.rs
+  cargo fmt -p xai-grok-shell -p xai-grok-workspace -p xai-grok-update -- --check
   cargo test --release -p xai-grok-tools test_persistent_shell_recovers_deleted_cwd --lib
   cargo test --release -p xai-grok-tools workdir_expands_tilde_to_home --lib
+  cargo test --release -p xai-grok-tools fnv_vector_low_24_bits --lib
+  cargo test --release -p xai-grok-tools find_skill_by_id_and_collision --lib
+  cargo test --release -p xai-grok-tools markdown_listing_includes_ids_in_full_and_name_only_tiers --lib
+  cargo test --release -p xai-grok-agent dedupe_skills_name_collision_does_not_propagate_config_source --lib
   cargo test --release -p xai-grok-agent test_background_tasks_defines_callback_and_poll --lib
+  cargo test --release -p xai-grok-shell backward_compat_empty_json --lib
   # Upstream enables release incremental artifacts; disabling them keeps the
   # build and cache inside GitHub's hosted-runner disk boundary.
   CARGO_INCREMENTAL=0 GROK_VERSION="$VERSION" cargo build --release -p xai-grok-pager-bin

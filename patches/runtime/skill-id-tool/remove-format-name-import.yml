@@ -1,0 +1,7 @@
+id: skill-id-tool-remove-format-name-import
+language: Rust
+severity: error
+message: Remove the qualified-name helper import after switching to id-only lookup.
+rule:
+  pattern: "use crate::implementations::skills::skill::{SkillOutput, extract_skill_body, format_skill_name};"
+fix: "use crate::implementations::skills::skill::{SkillOutput, extract_skill_body};"

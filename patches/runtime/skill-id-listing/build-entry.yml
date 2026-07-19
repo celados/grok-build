@@ -1,0 +1,38 @@
+id: skill-id-listing-build-entry
+language: Rust
+severity: error
+message: Compute the skill id while constructing listing entries.
+rule:
+  pattern:
+    context: |
+      fn build_skill_entry<'a>(
+        $$$ARGS
+      ) -> SkillEntry<'a> {
+        $$$BODY
+      }
+    selector: function_item
+fix: |-
+  fn build_skill_entry<'a>(
+      s: &'a SkillInfo,
+      real_prefix: Option<&str>,
+      display_prefix: Option<&str>,
+      extract_triggers: bool,
+  ) -> SkillEntry<'a> {
+      let wtu = if let Some(ref wtu) = s.when_to_use {
+          Some(wtu.as_str())
+      } else if extract_triggers {
+          extract_trigger_suffix(&s.description).map(|(_, triggers)| triggers)
+      } else {
+          None
+      };
+      SkillEntry {
+          name: &s.name,
+          id: s.short_id(),
+          description: &s.description,
+          when_to_use: wtu,
+          display_path: match (real_prefix, display_prefix) {
+              (Some(real), Some(display)) => s.path.replace(real, display),
+              _ => s.path.clone(),
+          },
+      }
+  }

@@ -1,0 +1,20 @@
+id: skill-id-tool-register-codex
+language: Rust
+severity: error
+message: Register the id-based skill tool in the codex toolset.
+rule:
+  all:
+    - pattern: "vec![$$$ITEMS]"
+    - has:
+        regex: use_tool::UseTool
+        stopBy: end
+    - inside:
+        pattern:
+          context: |
+            fn codex_toolset() -> ToolServerConfig {
+              $$$BODY
+            }
+          selector: function_item
+        stopBy: end
+fix: |-
+  vec![$$$ITEMS (&opencode::OpenCodeSkillTool).into()]

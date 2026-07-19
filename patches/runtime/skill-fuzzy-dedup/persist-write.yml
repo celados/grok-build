@@ -1,0 +1,17 @@
+id: skill-fuzzy-dedup-persist-write
+language: Rust
+severity: error
+message: Persist stable skill ids instead of names.
+rule:
+  all:
+    - kind: field_identifier
+    - regex: ^announced_skill_names$
+    - inside:
+        pattern:
+          context: |
+            pub(super) async fn persist_announcement_state(&self) {
+              $$$BODY
+            }
+          selector: function_item
+        stopBy: end
+fix: announced_skill_ids

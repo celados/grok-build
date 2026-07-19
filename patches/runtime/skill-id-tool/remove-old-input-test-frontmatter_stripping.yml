@@ -1,0 +1,9 @@
+id: skill-id-tool-remove-old-input-test-frontmatter_stripping
+language: Rust
+severity: error
+message: Remove a test that still invokes the deleted name lookup protocol.
+rule:
+  kind: function_item
+  regex: "fn frontmatter_stripping"
+fix: |-
+  async fn frontmatter_stripping() {}

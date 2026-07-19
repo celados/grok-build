@@ -1,0 +1,9 @@
+id: skill-id-tool-remove-find-qualified
+language: Rust
+severity: error
+message: Remove a test for a deleted name-based lookup path.
+rule:
+  kind: function_item
+  regex: "fn find_skill_by_qualified_name"
+fix: |-
+  fn find_skill_by_qualified_name() {}

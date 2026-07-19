@@ -1,0 +1,28 @@
+id: skill-id-tool-find-by-id
+language: Rust
+severity: error
+message: Make skill lookup id-primary and fail closed on collisions.
+rule:
+  pattern:
+    context: |
+      fn find_skill<'a>(name: &str, skills: &'a [SkillInfo]) -> FindSkillResult<'a> {
+        $$$BODY
+      }
+    selector: function_item
+fix: |-
+  fn find_skill<'a>(id: &str, skills: &'a [SkillInfo]) -> FindSkillResult<'a> {
+      let matches: Vec<&SkillInfo> = skills
+          .iter()
+          .filter(|s| s.enabled && s.short_id() == id)
+          .collect();
+      match matches.as_slice() {
+          [] => FindSkillResult::NotFound,
+          [skill] => FindSkillResult::Found(skill),
+          collisions => FindSkillResult::Collision(
+              collisions
+                  .iter()
+                  .map(|s| format!("{} ({})", s.name, s.path))
+                  .collect(),
+          ),
+      }
+  }

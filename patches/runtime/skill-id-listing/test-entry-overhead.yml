@@ -1,0 +1,26 @@
+id: skill-id-listing-test-overhead
+language: Rust
+severity: error
+message: Update overhead regression literals for the id field.
+rule:
+  kind: function_item
+  regex: "fn overhead_larger_with_when_to_use"
+fix: |-
+  fn overhead_larger_with_when_to_use() {
+      let without = SkillEntry {
+          name: "s",
+          description: "desc",
+          when_to_use: None,
+          display_path: "/p/SKILL.md".to_owned(),
+          id: "testid".to_owned(),
+      };
+      let with = SkillEntry {
+          name: "s",
+          description: "desc",
+          when_to_use: Some("trigger"),
+          display_path: "/p/SKILL.md".to_owned(),
+          id: "testid".to_owned(),
+      };
+      let diff = with.overhead() - without.overhead();
+      assert_eq!(diff, "  Use when: ".len() + "\n".len());
+  }

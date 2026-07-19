@@ -1,0 +1,8 @@
+id: skill-fuzzy-dedup-remove-doc-6
+language: Rust
+severity: error
+message: Remove the remaining stale copied-directory documentation fragment.
+rule:
+  kind: doc_comment
+  regex: "cp -r japandi japandi2"
+fix: ""

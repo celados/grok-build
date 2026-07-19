@@ -1,0 +1,18 @@
+id: skill-id-tool-input-id
+language: Rust
+severity: error
+message: Present the OpenCode skill argument as id while retaining the Rust field name.
+rule:
+  pattern:
+    context: |
+      pub struct SkillInput {
+        $$$FIELDS
+      }
+    selector: struct_item
+fix: |-
+  pub struct SkillInput {
+      /// The short id of the skill to invoke.
+      #[serde(rename = "id")]
+      #[schemars(description = "The six-character id of the skill to invoke")]
+      pub name: String,
+  }

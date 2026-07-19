@@ -1,0 +1,9 @@
+id: skill-fuzzy-dedup-remove-test-list_skills_auto_and_config_overlap_keeps_config_toml_source
+language: Rust
+severity: error
+message: Remove a test coupled to deleted name-shadowing semantics.
+rule:
+  kind: function_item
+  regex: "fn list_skills_auto_and_config_overlap_keeps_config_toml_source"
+fix: |-
+  async fn list_skills_auto_and_config_overlap_keeps_config_toml_source() {}

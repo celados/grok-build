@@ -1,0 +1,8 @@
+id: skill-fuzzy-dedup-remove-doc-rekey
+language: Rust
+severity: error
+message: Remove stale re-key reference from the deduplication documentation.
+rule:
+  kind: doc_comment
+  regex: "rekey_to_dir_basename"
+fix: ""

@@ -1,0 +1,8 @@
+id: skill-fuzzy-dedup-remove-doc-1
+language: Rust
+severity: error
+message: Remove stale documentation for deleted name re-keying.
+rule:
+  kind: line_comment
+  regex: "Re-identify a name-collision party"
+fix: ""

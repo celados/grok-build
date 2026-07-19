@@ -1,0 +1,9 @@
+id: skill-id-tool-remove-old-input-test-base_directory_in_output
+language: Rust
+severity: error
+message: Remove a test that still invokes the deleted name lookup protocol.
+rule:
+  kind: function_item
+  regex: "fn base_directory_in_output"
+fix: |-
+  async fn base_directory_in_output() {}

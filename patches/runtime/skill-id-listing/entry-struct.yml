@@ -1,0 +1,19 @@
+id: skill-id-listing-entry-struct
+language: Rust
+severity: error
+message: Carry the stable id into every markdown listing tier.
+rule:
+  pattern:
+    context: |
+      struct SkillEntry<'a> {
+        $$$FIELDS
+      }
+    selector: struct_item
+fix: |-
+  struct SkillEntry<'a> {
+      name: &'a str,
+      id: String,
+      description: &'a str,
+      when_to_use: Option<&'a str>,
+      display_path: String,
+  }

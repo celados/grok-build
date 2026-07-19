@@ -1,0 +1,26 @@
+id: skill-id-listing-regression
+language: Rust
+severity: error
+message: Add focused coverage for id-bearing markdown listing tiers.
+rule:
+  kind: function_item
+  regex: "fn no_skills_returns_none"
+fix: |-
+  fn no_skills_returns_none() {
+      assert!(announce(&[], 1000).is_none());
+  }
+
+  #[test]
+  fn markdown_listing_includes_ids_in_full_and_name_only_tiers() {
+      let entry = skill("foo", "short");
+      let id = entry.short_id();
+      let full = announce(&[entry.clone()], 8000).unwrap();
+      assert!(full.contains(&format!("- foo [{}]", id)));
+      assert!(full.contains("Absolute path:"));
+
+      let long = "x".repeat(10_000);
+      let tiny_entry = skill("foo", &long);
+      let tiny = announce(&[tiny_entry], 220).unwrap();
+      assert!(tiny.contains(&format!("- foo [{}]", id)));
+      assert!(!tiny.contains("Absolute path:"));
+  }

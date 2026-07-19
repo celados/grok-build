@@ -1,0 +1,9 @@
+id: skill-fuzzy-dedup-remove-test-dedupe_rekeys_same_scope_name_collision_to_dir_basename
+language: Rust
+severity: error
+message: Remove a test coupled to deleted name-shadowing semantics.
+rule:
+  kind: function_item
+  regex: "fn dedupe_rekeys_same_scope_name_collision_to_dir_basename"
+fix: |-
+  fn dedupe_rekeys_same_scope_name_collision_to_dir_basename() {}

@@ -1,0 +1,19 @@
+id: skill-id-tool-register-hashline
+language: Rust
+severity: error
+message: Register the id-based skill tool in the hashline toolset.
+rule:
+  all:
+    - pattern: "tools.extend([$$$ITEMS])"
+    - inside:
+        pattern:
+          context: |
+            pub fn grok_build_hashline_toolset(
+                hashline_tools: Vec<xai_grok_tools::registry::types::ToolConfig>,
+            ) -> ToolServerConfig {
+              $$$BODY
+            }
+          selector: function_item
+        stopBy: end
+fix: |-
+  tools.extend([$$$ITEMS (&opencode::OpenCodeSkillTool).into()])

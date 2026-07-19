@@ -1,0 +1,26 @@
+id: skill-fuzzy-dedup-conditional-activate
+language: Rust
+severity: error
+message: Persist conditional activation by stable id.
+rule:
+  pattern:
+    context: |
+      pub(super) fn activate_for_paths(&mut self, touched: &[&Path], cwd: &Path) -> Vec<SkillInfo> {
+        $$$BODY
+      }
+    selector: function_item
+fix: |-
+  pub(super) fn activate_for_paths(&mut self, touched: &[&Path], cwd: &Path) -> Vec<SkillInfo> {
+      let newly: Vec<SkillInfo> = self
+          .held
+          .iter()
+          .filter(|s| {
+              !self.activated.contains(&s.short_id()) && skill_matches_any(s, touched, cwd)
+          })
+          .cloned()
+          .collect();
+      for s in &newly {
+          self.activated.insert(s.short_id());
+      }
+      newly
+  }

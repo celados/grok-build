@@ -1,0 +1,9 @@
+id: skill-fuzzy-dedup-remove-test-dedupe_cross_scope_shadowing_unchanged
+language: Rust
+severity: error
+message: Remove a test coupled to deleted name-shadowing semantics.
+rule:
+  kind: function_item
+  regex: "fn dedupe_cross_scope_shadowing_unchanged"
+fix: |-
+  fn dedupe_cross_scope_shadowing_unchanged() {}
