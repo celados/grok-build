@@ -94,24 +94,9 @@ jobs:
         if: steps.plan.outputs.release == 'true'
         run: ./build.sh --upstream-ref "${{ steps.plan.outputs.upstream }}" --version "${{ steps.plan.outputs.version }}"
 
-      - name: Record build mapping
-        if: steps.plan.outputs.release == 'true' && steps.plan.outputs.append == 'true'
-        env:
-          VERSION: ${{ steps.plan.outputs.version }}
-          UPSTREAM: ${{ steps.plan.outputs.upstream }}
-        run: |
-          jq -nc \
-            --arg version "$VERSION" \
-            --arg upstream "$UPSTREAM" \
-            --arg built_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            --arg run "$GITHUB_RUN_ID" \
-            '{version:$version,upstream:$upstream,built_at:$built_at,run:$run}' >> versions.jsonl
-          git config user.name "celados-release-bot"
-          git config user.email "huodong.work@gmail.com"
-          git add versions.jsonl
-          git commit -m "release: record v$VERSION from upstream ${UPSTREAM:0:7}"
-          git push origin HEAD:main
-
+      # Publish before mapping so a main-branch push race cannot strand a finished
+      # binary. Mapping still needs to land; push uses rebase+retry for concurrent
+      # commits (manual fixes, schedule cadence bumps) during a long build.
       - name: Publish GitHub Release
         if: steps.plan.outputs.release == 'true'
         env:
@@ -124,6 +109,33 @@ jobs:
             --target main \
             --title "Grok Build $VERSION" \
             --notes "Permission-free macOS arm64 build from xai-org/grok-build@$UPSTREAM."
+
+      - name: Record build mapping
+        if: steps.plan.outputs.release == 'true' && steps.plan.outputs.append == 'true'
+        env:
+          VERSION: ${{ steps.plan.outputs.version }}
+          UPSTREAM: ${{ steps.plan.outputs.upstream }}
+        run: |
+          git config user.name "celados-release-bot"
+          git config user.email "huodong.work@gmail.com"
+          jq -nc \
+            --arg version "$VERSION" \
+            --arg upstream "$UPSTREAM" \
+            --arg built_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg run "$GITHUB_RUN_ID" \
+            '{version:$version,upstream:$upstream,built_at:$built_at,run:$run}' >> versions.jsonl
+          git add versions.jsonl
+          git commit -m "release: record v$VERSION from upstream ${UPSTREAM:0:7}"
+          # Long builds race with other pushes to main; rebase rather than fail.
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            git pull --rebase origin main
+            sleep $((attempt * 2))
+          done
+          echo "failed to push versions.jsonl after retries" >&2
+          exit 1
 
       - name: Open maintenance issue
         if: ${{ failure() }}
