@@ -15,12 +15,14 @@ fix: |-
       let entry = skill("foo", "short");
       let id = entry.short_id();
       let full = announce(&[entry.clone()], 8000).unwrap();
-      assert!(full.contains(&format!("- foo [{}]", id)));
-      assert!(full.contains("Absolute path:"));
+      assert!(full.contains(&format!("- id: {}\n  description: [foo] short", id)));
+      assert!(!full.contains("Absolute path:"), "path leaked:\n{full}");
 
       let long = "x".repeat(10_000);
       let tiny_entry = skill("foo", &long);
-      let tiny = announce(&[tiny_entry], 220).unwrap();
-      assert!(tiny.contains(&format!("- foo [{}]", id)));
-      assert!(!tiny.contains("Absolute path:"));
+      // Header + entry overhead + a sub-MIN_DESC_LENGTH remainder forces tier 3.
+      let tiny_budget = listing_header(DEFAULT_SKILL_TOOL_NAME).len() + 40;
+      let tiny = announce(&[tiny_entry], tiny_budget).unwrap();
+      assert!(tiny.contains(&format!("- id: {} [foo]", id)), "got:\n{tiny}");
+      assert!(!tiny.contains("  description:"), "tier 3 must be ids-only:\n{tiny}");
   }

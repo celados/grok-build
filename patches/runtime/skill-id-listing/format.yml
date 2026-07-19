@@ -1,7 +1,7 @@
 id: skill-id-listing-format
 language: Rust
 severity: error
-message: Render name, id, description, triggers, and retained absolute path.
+message: Render id-keyed entries; the name is a display tag inside the description.
 rule:
   pattern:
     context: |
@@ -15,13 +15,10 @@ fix: |-
       if let Some(wtu) = self.when_to_use {
           let wtu = truncate_str_with_marker(strip_leading_trigger_prefix(wtu), wtu_budget);
           format!(
-              "- {} [{}]: {}\n  Use when: {}\n  Absolute path: {}",
-              self.name, self.id, desc, wtu, self.display_path
+              "- id: {}\n  description: [{}] {}\n  Use when: {}",
+              self.id, self.name, desc, wtu
           )
       } else {
-          format!(
-              "- {} [{}]: {}\n  Absolute path: {}",
-              self.name, self.id, desc, self.display_path
-          )
+          format!("- id: {}\n  description: [{}] {}", self.id, self.name, desc)
       }
   }

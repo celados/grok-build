@@ -1,7 +1,7 @@
 id: skill-id-listing-name-only
 language: Rust
 severity: error
-message: Keep ids visible when the listing falls back to names-only mode.
+message: Keep the id-first shape when the listing falls back to names-only mode.
 rule:
   pattern:
     context: |
@@ -11,5 +11,5 @@ rule:
     selector: function_item
 fix: |-
   fn name_only(&self) -> String {
-      format!("- {} [{}]", self.name, self.id)
+      format!("- id: {} [{}]", self.id, self.name)
   }

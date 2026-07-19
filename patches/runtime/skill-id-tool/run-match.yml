@@ -28,19 +28,19 @@ fix: |-
           });
       }
       FindSkillResult::NotFound => {
-          let names: Vec<String> = available_skills
+          let ids: Vec<String> = available_skills
               .iter()
-              .map(|s| format!("{} [{}]", s.name, s.short_id()))
+              .map(|s| format!("{} [{}]", s.short_id(), s.name))
               .collect();
-          let available = if names.is_empty() {
+          let available = if ids.is_empty() {
               "none".to_string()
           } else {
-              names.join(", ")
+              ids.join(", ")
           };
           return Ok(SkillOutput {
               success: false,
               tool_result: format!(
-                  "Skill id \"{}\" not found. Available skills: {}",
+                  "Skill id \"{}\" not found. The argument must be a listed six-character id, not a skill name. Available (id [name]): {}",
                   input.name, available
               ),
               skill_name: input.name.clone(),

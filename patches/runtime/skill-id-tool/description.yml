@@ -12,10 +12,15 @@ rule:
 fix: |-
   const DESCRIPTION: &str = r#"Load a specialized skill by its short id.
 
-  The skill listing supplies each skill's name, six-character id, description, and
-  absolute path for context only. Call this tool with the listed id to load the
-  skill content.
+  The skill listing renders each entry as:
+
+  - id: <six hex chars>
+    description: [<display name>] <what the skill does>
+    Use when: <trigger conditions>
+
+  Pass the listed id exactly. The [bracketed] display name is not an id; a name
+  will never match.
 
   Skills are loaded ONLY through this tool. Never use read_file to read SKILL.md,
-  never construct a skill path, and never guess an id. If an id is not listed,
-  use the available name [id] pairs from the error response."#;
+  never construct a skill path, and never guess an id. If a call fails, pick the
+  correct id from the "id [name]" pairs in the error response."#;

@@ -58,9 +58,11 @@ teaching the model to synthesize paths:
 - `patches/runtime/skill-id-tool/`: registers the OpenCode skill tool in every
   skill-discovering toolset, exposes `id`, removes name fallback, and fails
   closed on ID collisions.
-- `patches/runtime/skill-id-listing/`: renders `name [id]` in markdown entries,
-  including the names-only budget tier, while retaining descriptions, triggers,
-  and absolute paths as context.
+- `patches/runtime/skill-id-listing/`: renders id-keyed markdown entries
+  (`- id: <hex>` / `description: [<name>] …`, incl. the names-only budget
+  tier); the bracketed name is a display tag, the id is the only load handle.
+  Per-entry absolute paths are dropped — the skill tool output already carries
+  the base directory.
 - `patches/runtime/skill-fuzzy-dedup/`: applies deliberate `[name,
   chars_length]` fuzzy dedup, migrates announcement/conditional/persisted state
   keys to IDs, and removes obsolete name-shadowing code.
