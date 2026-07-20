@@ -63,6 +63,11 @@ jobs:
 
       - name: Install build prerequisites
         if: steps.plan.outputs.release == 'true'
+        env:
+          # `brew install` otherwise self-updates its formula index first, which
+          # costs minutes on the hosted image and never affects the pinned tools.
+          HOMEBREW_NO_AUTO_UPDATE: 1
+          HOMEBREW_NO_INSTALL_CLEANUP: 1
         run: |
           # The hosted image carries an untrusted AWS tap which otherwise emits
           # an unrelated workflow annotation on every Homebrew invocation.
@@ -73,22 +78,25 @@ jobs:
         if: steps.plan.outputs.release == 'true'
         run: ./build.sh --prepare --upstream-ref "${{ steps.plan.outputs.upstream }}"
 
-      - uses: actions/cache@v6
+      # Replaces a hand-rolled cache of target/release/{deps,build,.fingerprint},
+      # measured at 8.9 GB. Two problems it could not solve:
+      #   - Cargo never GCs target/, so stale rlibs accumulated across runs (three
+      #     copies of the 148 MB xai_grok_shell rlib alone) until the entry
+      #     approached GitHub's 10 GB per-repo limit and LRU-evicted its own
+      #     restore-keys fallback.
+      #   - Patch seams were in the cache key, so editing a patch — the entire
+      #     point of this repo — forced a cold dependency build.
+      # rust-cache prunes stale artifacts and, by default, caches only dependency
+      # crates: the workspace crates it skips are exactly the ones a new upstream
+      # SHA invalidates on every release anyway.
+      - uses: Swatinem/rust-cache@v2
         if: steps.plan.outputs.release == 'true'
         with:
-          path: |
-            ~/.cargo/registry/index
-            ~/.cargo/registry/cache
-            ~/.cargo/git/db
-            sources/target/release/.fingerprint
-            sources/target/release/build
-            sources/target/release/deps
-          # Cache entries are immutable: include both toolchain/dependencies and
-          # our patch contract so new test artifacts are saved under a fresh key.
-          key: grok-macos-arm64-${{ hashFiles('sources/rust-toolchain.toml', 'sources/Cargo.lock') }}-${{ hashFiles('build.sh', 'patches/**/*.yml') }}
-          restore-keys: |
-            grok-macos-arm64-${{ hashFiles('sources/rust-toolchain.toml', 'sources/Cargo.lock') }}-
-            grok-macos-arm64-
+          workspaces: sources
+          shared-key: grok-macos-arm64
+          # Seam drift aborts the build after dependencies are already compiled;
+          # keeping that work makes the retry after a patch fix cheap.
+          cache-on-failure: true
 
       - name: Build macOS arm64 release
         if: steps.plan.outputs.release == 'true'

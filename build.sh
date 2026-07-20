@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Upstream sets `incremental = true` on [profile.release], which makes every
+# release-profile cargo invocation here (tests included, not just the final
+# build) write into target/release/incremental — measured at 8.3 GB locally.
+# Nothing reuses those artifacts: each CI run starts from a restored cache that
+# never contained them. Export once so no invocation can miss it.
+export CARGO_INCREMENTAL=0
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCES_DIR="$ROOT_DIR/sources"
 UPSTREAM_URL="https://github.com/xai-org/grok-build.git"
@@ -45,6 +52,14 @@ prepare_sources() {
     && ! git -C "$SOURCES_DIR" diff --quiet HEAD --; then
     echo "Refusing to replace a modified sources/ checkout." >&2
     exit 1
+  fi
+
+  # CI runs --prepare (to populate Cargo.lock for the cache key) and then the
+  # real build, so an exact-SHA ref would otherwise be fetched twice. The tree
+  # was just verified clean above, so an already-checked-out SHA needs no work.
+  if [[ "$(git -C "$SOURCES_DIR" rev-parse --verify --quiet HEAD || true)" == "$UPSTREAM_REF" ]]; then
+    echo "upstream: $UPSTREAM_REF (already checked out)"
+    return
   fi
 
   git -C "$SOURCES_DIR" fetch --depth=1 origin "$UPSTREAM_REF"
@@ -330,24 +345,28 @@ fi
     crates/codegen/xai-grok-pager-render/src/terminal/test.rs \
     crates/codegen/xai-grok-pager/src/diagnostics.rs
   cargo fmt -p xai-grok-shell -p xai-grok-workspace -p xai-grok-update -- --check
-  cargo test --release -p xai-grok-tools test_persistent_shell_recovers_deleted_cwd --lib
-  cargo test --release -p xai-grok-tools workdir_expands_tilde_to_home --lib
-  cargo test --release -p xai-grok-tools fnv_vector_low_24_bits --lib
-  cargo test --release -p xai-grok-tools find_skill_by_id_and_collision --lib
-  cargo test --release -p xai-grok-tools skill_file_read_and_menu --lib
-  cargo test --release -p xai-grok-tools markdown_listing_includes_ids_in_full_and_name_only_tiers --lib
-  cargo test --release -p xai-grok-agent dedupe_skills_name_collision_does_not_propagate_config_source --lib
-  cargo test --release -p xai-grok-agent test_background_tasks_defines_callback_and_poll --lib
-  cargo test --release -p xai-grok-shell backward_compat_empty_json --lib
+  # One invocation per package: libtest ORs multiple positional filters, and
+  # each extra `cargo test` re-fingerprints the whole 1274-crate graph before
+  # deciding it has nothing to rebuild.
+  cargo test --release -p xai-grok-tools --lib -- \
+    test_persistent_shell_recovers_deleted_cwd \
+    workdir_expands_tilde_to_home \
+    fnv_vector_low_24_bits \
+    find_skill_by_id_and_collision \
+    skill_file_read_and_menu \
+    markdown_listing_includes_ids_in_full_and_name_only_tiers
+  cargo test --release -p xai-grok-agent --lib -- \
+    dedupe_skills_name_collision_does_not_propagate_config_source \
+    test_background_tasks_defines_callback_and_poll
+  cargo test --release -p xai-grok-shell --lib -- backward_compat_empty_json
   # Otty KKP opt-in: the second test also pins the IME payload-origin gate that
   # must stay Otty-only. The diagnostics focus-tracking flip rides the same
   # predicate and is left to the seam assertion — its crate is too expensive to
   # build a test harness for on every release.
-  cargo test --release -p xai-grok-pager-render otty_negotiates_kitty_keyboard --lib
-  cargo test --release -p xai-grok-pager-render otty_is_capability_classified --lib
-  # Upstream enables release incremental artifacts; disabling them keeps the
-  # build and cache inside GitHub's hosted-runner disk boundary.
-  CARGO_INCREMENTAL=0 GROK_VERSION="$VERSION" cargo build --release -p xai-grok-pager-bin
+  cargo test --release -p xai-grok-pager-render --lib -- \
+    otty_negotiates_kitty_keyboard \
+    otty_is_capability_classified
+  GROK_VERSION="$VERSION" cargo build --release -p xai-grok-pager-bin
 )
 
 mkdir -p "$OUTPUT_DIR"
