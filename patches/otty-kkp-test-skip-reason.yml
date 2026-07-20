@@ -1,0 +1,20 @@
+id: otty-kkp-test-skip-reason
+language: Rust
+severity: error
+message: Assert Otty negotiates KKP instead of falling back to the legacy encoding.
+rule:
+  kind: function_item
+  regex: "fn otty_skips_kitty_keyboard_like_unknown"
+fix: |-
+  fn otty_negotiates_kitty_keyboard() {
+      let ctx = TerminalContext {
+          brand: TerminalName::Otty,
+          env_brand: TerminalName::Otty,
+          multiplexer: MultiplexerKind::Undetected,
+          ..Default::default()
+      };
+      // Legacy encoding collapses Ctrl+M into Enter; only the disambiguate
+      // enhancement keeps them apart, and the model picker depends on it.
+      assert_eq!(ctx.kitty_skip_reason(), None);
+      assert!(!ctx.shift_enter_unavailable());
+  }

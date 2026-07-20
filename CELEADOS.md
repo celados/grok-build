@@ -35,6 +35,23 @@ grok update
 
 Both commands use releases from `celados/grok-build`.
 
+## Landing a patch
+
+A patch is not done when the rules match — it is done when a release carrying it
+is installed locally. Finish every patch with this sequence:
+
+1. `./build.sh --check` — re-verifies each seam against the *current* upstream
+   head, which is usually ahead of whatever `sources/` was left at. Seam counts
+   proved against a stale snapshot mean nothing.
+2. Commit and push to `main`.
+3. `gh workflow run sync-and-release.yml -f force_release=true`. **Pushing does
+   not build anything.** The workflow triggers only on `schedule` and
+   `workflow_dispatch`, and a scheduled run whose upstream SHA is unchanged exits
+   as a no-op — so a patch-only commit never releases itself.
+4. Watch the run to completion (`gh run watch`). A failure opens a maintenance
+   issue instead of publishing.
+5. `grok update`, then confirm `grok --version` reports the new build.
+
 ## Upstream contract
 
 The scheduled workflow polls `upstream/main` every 15 minutes and compares it
@@ -74,3 +91,19 @@ Groups ①–③ depend only on the shared ⓪ ID helper and are otherwise indep
 applicable/revertible. All rules are required seams: upstream drift stops the
 build instead of silently producing a partial skill protocol. XML compatibility
 listings remain outside this markdown-mode patch contract.
+
+## Terminal: Otty keyboard protocol
+
+`patches/otty-kkp*.yml` drop `Otty` from `TerminalName::is_capability_unclassified`.
+Upstream groups it with `Unknown` for want of positive evidence, so
+`kitty_skip_reason` reports `unknown_no_multiplexer` and the Kitty keyboard
+protocol is never pushed. Without its disambiguate enhancement `Ctrl+M` is the
+same byte as `Enter` (CR), which costs the agent-screen model picker, `Shift+Enter`,
+and focus tracking. Otty documents KKP as on by default —
+<https://docs.otty.sh/terminal-features/input#kitty-keyboard-protocol>.
+
+The three accompanying rules retarget the upstream tests that assert the old
+classification. `delivers_ime_as_bracketed_paste` matches `Otty` directly and is
+deliberately left alone: it gates the payload-origin check that keeps a macOS IME
+commit from being read as a clipboard paste. `otty-kkp-test-capability` asserts
+that gate still holds, so a future widening of this patch fails loudly.

@@ -70,6 +70,10 @@ patches/folder-trust-inert.yml crates/codegen/xai-grok-workspace/src/folder_trus
 patches/release-repository.yml crates/codegen/xai-grok-update/src/version.rs
 patches/reinstall-hint.yml crates/codegen/xai-grok-update/src/auto_update.rs
 patches/release-installer.yml crates/codegen/xai-grok-update/src/auto_update.rs
+patches/otty-kkp.yml crates/codegen/xai-grok-pager-render/src/terminal/mod.rs
+patches/otty-kkp-test-capability.yml crates/codegen/xai-grok-pager-render/src/terminal/test.rs
+patches/otty-kkp-test-skip-reason.yml crates/codegen/xai-grok-pager-render/src/terminal/test.rs
+patches/otty-kkp-test-focus-tracking.yml crates/codegen/xai-grok-pager/src/diagnostics.rs
 patches/runtime/deleted-cwd/regression.yml crates/codegen/xai-grok-tools/src/computer/local/terminal.rs
 patches/runtime/bash-workdir-tilde/regression.yml crates/codegen/xai-grok-tools/src/implementations/opencode/bash/mod.rs
 patches/runtime/prompt-background-tasks/regression.yml crates/codegen/xai-grok-agent/src/prompt/template.rs
@@ -321,7 +325,10 @@ fi
     crates/codegen/xai-grok-agent/src/prompt/skills.rs \
     crates/codegen/xai-grok-shell/src/session/announcement_state.rs \
     crates/codegen/xai-grok-shell/src/session/acp_session_impl/mcp.rs \
-    crates/codegen/xai-grok-shell/src/session/acp_session_impl/spawn.rs
+    crates/codegen/xai-grok-shell/src/session/acp_session_impl/spawn.rs \
+    crates/codegen/xai-grok-pager-render/src/terminal/mod.rs \
+    crates/codegen/xai-grok-pager-render/src/terminal/test.rs \
+    crates/codegen/xai-grok-pager/src/diagnostics.rs
   cargo fmt -p xai-grok-shell -p xai-grok-workspace -p xai-grok-update -- --check
   cargo test --release -p xai-grok-tools test_persistent_shell_recovers_deleted_cwd --lib
   cargo test --release -p xai-grok-tools workdir_expands_tilde_to_home --lib
@@ -332,6 +339,12 @@ fi
   cargo test --release -p xai-grok-agent dedupe_skills_name_collision_does_not_propagate_config_source --lib
   cargo test --release -p xai-grok-agent test_background_tasks_defines_callback_and_poll --lib
   cargo test --release -p xai-grok-shell backward_compat_empty_json --lib
+  # Otty KKP opt-in: the second test also pins the IME payload-origin gate that
+  # must stay Otty-only. The diagnostics focus-tracking flip rides the same
+  # predicate and is left to the seam assertion — its crate is too expensive to
+  # build a test harness for on every release.
+  cargo test --release -p xai-grok-pager-render otty_negotiates_kitty_keyboard --lib
+  cargo test --release -p xai-grok-pager-render otty_is_capability_classified --lib
   # Upstream enables release incremental artifacts; disabling them keeps the
   # build and cache inside GitHub's hosted-runner disk boundary.
   CARGO_INCREMENTAL=0 GROK_VERSION="$VERSION" cargo build --release -p xai-grok-pager-bin

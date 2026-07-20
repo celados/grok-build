@@ -1,0 +1,16 @@
+id: otty-kkp-test-capability
+language: Rust
+severity: error
+message: Assert Otty is classified while the IME bracketed-paste gate stays Otty-only.
+rule:
+  kind: function_item
+  regex: "fn otty_is_capability_unclassified_like_unknown"
+fix: |-
+  fn otty_is_capability_classified() {
+      assert!(!TerminalName::Otty.is_capability_unclassified());
+      assert!(TerminalName::Unknown.is_capability_unclassified());
+      assert!(!TerminalName::Ghostty.is_capability_unclassified());
+      assert!(!TerminalName::AppleTerminal.is_capability_unclassified());
+      // The KKP opt-in must not leak into the IME payload-origin gate.
+      assert!(TerminalName::Otty.delivers_ime_as_bracketed_paste());
+  }

@@ -1,0 +1,7 @@
+id: otty-kkp-test-focus-tracking
+language: Rust
+severity: error
+message: Otty reports CSI focus tracking once it is a classified brand.
+rule:
+  pattern: assert!(!supports_focus_tracking(TerminalName::Otty));
+fix: assert!(supports_focus_tracking(TerminalName::Otty));

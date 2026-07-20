@@ -1,0 +1,26 @@
+id: otty-kkp
+language: Rust
+severity: error
+message: Classify Otty as a known brand so it negotiates the Kitty keyboard protocol.
+rule:
+  pattern: |-
+    pub fn is_capability_unclassified(self) -> bool {
+        matches!(self, Self::Unknown | Self::Otty)
+    }
+fix: |-
+  pub fn is_capability_unclassified(self) -> bool {
+      // Otty ships the Kitty keyboard protocol on by default:
+      // https://docs.otty.sh/terminal-features/input#kitty-keyboard-protocol
+      // Upstream buckets it with Unknown for want of positive evidence, so
+      // `kitty_skip_reason` returns "unknown_no_multiplexer" and KKP is never
+      // pushed — leaving Ctrl+M byte-identical to Enter (both CR) and the
+      // agent-screen model picker unreachable. Verified empirically: running
+      // under Otty with TERM_PROGRAM=ghostty restores the picker.
+      //
+      // Scope: this also opts Otty into Shift+Enter and CSI focus tracking,
+      // which ride the same negotiation. It deliberately does NOT touch
+      // `delivers_ime_as_bracketed_paste`, which matches Otty directly and
+      // must stay Otty-only — otherwise macOS IME commits are mistaken for
+      // clipboard pastes and drag in a stray clipboard image.
+      matches!(self, Self::Unknown)
+  }
