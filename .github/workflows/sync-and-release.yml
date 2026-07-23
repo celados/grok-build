@@ -18,17 +18,24 @@ concurrency:
   group: sync-and-release
   cancel-in-progress: false
 
-permissions:
-  contents: write
-  issues: write
-
 jobs:
   release:
     runs-on: macos-15
+    permissions:
+      contents: write
+      pull-requests: read
+      issues: write
+    outputs:
+      repairable: ${{ steps.maintenance.outputs.repairable }}
+      upstream: ${{ steps.plan.outputs.upstream }}
+      tracking_issue: ${{ steps.maintenance.outputs.issue }}
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          # Upstream build scripts must not inherit a repository mutation
+          # credential through git configuration.
+          persist-credentials: false
 
       - name: Resolve upstream and version
         id: plan
@@ -75,8 +82,15 @@ jobs:
           brew install ast-grep dotslash
 
       - name: Prepare upstream source
+        id: prepare
         if: steps.plan.outputs.release == 'true'
-        run: ./build.sh --prepare --upstream-ref "${{ steps.plan.outputs.upstream }}"
+        env:
+          UPSTREAM: ${{ steps.plan.outputs.upstream }}
+        run: |
+          mkdir -p .agent-context
+          set -o pipefail
+          ./build.sh --prepare --upstream-ref "$UPSTREAM" \
+            2>&1 | tee .agent-context/prepare.log
 
       # Replaces a hand-rolled cache of target/release/{deps,build,.fingerprint},
       # measured at 8.9 GB. Two problems it could not solve:
@@ -99,8 +113,16 @@ jobs:
           cache-on-failure: true
 
       - name: Build macOS arm64 release
+        id: build
         if: steps.plan.outputs.release == 'true'
-        run: ./build.sh --upstream-ref "${{ steps.plan.outputs.upstream }}" --version "${{ steps.plan.outputs.version }}"
+        env:
+          UPSTREAM: ${{ steps.plan.outputs.upstream }}
+          VERSION: ${{ steps.plan.outputs.version }}
+        run: |
+          mkdir -p .agent-context
+          set -o pipefail
+          ./build.sh --upstream-ref "$UPSTREAM" --version "$VERSION" \
+            2>&1 | tee .agent-context/build.log
 
       # Publish before mapping so a main-branch push race cannot strand a finished
       # binary. Mapping still needs to land; push uses rebase+retry for concurrent
@@ -121,9 +143,13 @@ jobs:
       - name: Record build mapping
         if: steps.plan.outputs.release == 'true' && steps.plan.outputs.append == 'true'
         env:
+          GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.plan.outputs.version }}
           UPSTREAM: ${{ steps.plan.outputs.upstream }}
         run: |
+          # Checkout credentials were intentionally removed before executing
+          # upstream code; restore GitHub auth only on this trusted path.
+          gh auth setup-git
           git config user.name "celados-release-bot"
           git config user.email "huodong.work@gmail.com"
           jq -nc \
@@ -146,14 +172,86 @@ jobs:
           exit 1
 
       - name: Open maintenance issue
+        id: maintenance
         if: ${{ failure() }}
         env:
           GH_TOKEN: ${{ github.token }}
-          TITLE: Automated upstream build failed
+          UPSTREAM: ${{ steps.plan.outputs.upstream }}
+          PREPARE_OUTCOME: ${{ steps.prepare.outcome }}
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
         run: |
-          existing="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "$TITLE in:title" --json number --jq '.[0].number // ""')"
+          short_upstream="${UPSTREAM:0:12}"
+          title="Automated upstream build failed: $short_upstream"
+          marker="<!-- grok-upstream:$UPSTREAM -->"
+          run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          existing="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "$UPSTREAM in:body" --json number --jq '.[0].number // ""')"
+
           if [[ -z "$existing" ]]; then
-            gh issue create --repo "$GITHUB_REPOSITORY" \
-              --title "$TITLE" \
-              --body "Inspect run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID; upstream may have invalidated an AST patch seam."
+            existing="$(gh api --method POST "repos/$GITHUB_REPOSITORY/issues" \
+              -f title="$title" \
+              -f body="$marker
+
+          Inspect run $run_url. Upstream $UPSTREAM may have invalidated a downstream patch contract." \
+              --jq .number)"
+          else
+            gh issue comment "$existing" --repo "$GITHUB_REPOSITORY" \
+              --body "The same upstream revision failed again: $run_url"
           fi
+
+          repairable=false
+          if [[ "$PREPARE_OUTCOME" == failure || "$BUILD_OUTCOME" == failure ]]; then
+            branch="codex/grok-upstream-$UPSTREAM"
+            open_pr="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --head "$branch" --json number --jq '.[0].number // ""')"
+            if [[ -z "$open_pr" ]]; then
+              repairable=true
+            fi
+          fi
+
+          mkdir -p .agent-context
+          jq -n \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg run "$run_url" \
+            --arg upstream "$UPSTREAM" \
+            --arg prepare_outcome "$PREPARE_OUTCOME" \
+            --arg build_outcome "$BUILD_OUTCOME" \
+            '{repository:$repository,run:$run,upstream:$upstream,prepare_outcome:$prepare_outcome,build_outcome:$build_outcome}' \
+            > .agent-context/task.json
+
+          echo "issue=$existing" >> "$GITHUB_OUTPUT"
+          echo "repairable=$repairable" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Codex repair context
+        if: ${{ failure() && steps.maintenance.outputs.repairable == 'true' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: agent-context-${{ steps.plan.outputs.upstream }}
+          path: .agent-context
+          if-no-files-found: error
+          retention-days: 7
+
+  repair:
+    needs: release
+    if: ${{ always() && needs.release.outputs.repairable == 'true' }}
+    uses: celados/gha/.github/workflows/codex.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      actions: read
+    with:
+      task: |
+        Repair the failed xai-org/grok-build upstream integration for upstream
+        ${{ needs.release.outputs.upstream }}.
+
+        Inspect .agent-context first, then fetch that exact public upstream
+        revision when source context is needed. Keep the change in this
+        downstream repository's patch/build layer; never commit generated
+        sources. If upstream already provides the behavior of one of our
+        conditional patches, remove or disable that downstream patch through
+        its recognized satisfied-state contract instead of adapting an obsolete
+        seam. Do not change release/version mappings.
+      task_key: grok-upstream-${{ needs.release.outputs.upstream }}
+      context_artifact: agent-context-${{ needs.release.outputs.upstream }}
+      tracking_issue: ${{ needs.release.outputs.tracking_issue }}
+    secrets:
+      PRISM_API_KEY: ${{ secrets.PRISM_API_KEY }}
