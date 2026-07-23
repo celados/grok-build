@@ -1,6 +1,7 @@
 # Backlog
 
 - [2026-07-19] skill listing:上游 `listing.rs` 若干格式断言测试(`single_skill_within_budget`、`format_renders_use_when_line_with_explicit_when_to_use`、`format_no_use_when_line_without_when_to_use`、`tier3_no_overflow_indicator_when_all_names_fit` 等)在 patched tree 下 run 会红。现行契约是「全 lib 可编译 + build.sh 点名测试绿」,它们不在点名列表因此不阻塞;若将来扩大跑测范围,需补 remove/rewrite 规则。(`two_hundred_skills_fit_within_default_budget` 经推演在 pristine upstream 下疑似本来就红。)
+- [2026-07-20, resolved 2026-07-21] prompt 偶发"覆盖模式"已用 widget 公共事件路径稳定复现:在 `abcdef` 上 mouse down/drag/up 选中 `abc`,再输入 `X`,上游得到 `Xdef`;原因是 `TextArea` 的 `keep_selection_after_mouseup=true` 让隐藏选区留到下一次 `input()` 并先执行 `delete_selection()`。`patches/runtime/prompt-mouse-selection/` 现只在 `PromptWidget` 初始化时将它设为 false,回归结果为 `abcXdef`。旧 knowledge 中已确认 IRM 泄漏的结论已撤回。回归测试会由 AST rule 注入,但 `xai-grok-pager` test harness 仍未加入 release build 的点名测试,因为其编译成本很高;本地 targeted test 已通过,三态 seam 会在上游修复时自动跳过、未知 drift 时阻断发布。
 - [2026-07-20] otty-kkp:`supports_focus_tracking_known_terminals`(`xai-grok-pager`)未进 build.sh 点名测试列表 —— 该 crate 编译 test harness 太贵(本地 debug 4m46s),而 release 构建不编译 `cfg(test)` 代码,所以这条断言在 CI 完全不被验证,只有 seam 规则保证那一行被改写。本地已实跑通过(108 passed)。若将来该 crate 已因别的原因进了跑测范围,顺手补上。
 - [2026-07-20] CI 提速留下的尾巴(三条,都是故意不做):
   1. `cargo test <filter>` 匹配到 0 个测试仍然 exit 0。点名测试从 11 条 invocation 合并成 4 条之后,某条上游被删的测试更难从日志肉眼发现(以前一条一行,现在只看到汇总的 "N passed")。真正的修法是断言实际跑过的测试数等于点名数,暂未做。

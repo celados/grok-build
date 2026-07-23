@@ -1,0 +1,11 @@
+id: prompt-mouse-selection-release
+language: Rust
+severity: error
+message: End prompt drag-selection on mouse-up so later typing cannot replace hidden text.
+rule:
+  pattern: let mut textarea = TextArea::new();
+fix: |-
+  let mut textarea = TextArea::new();
+  // Prompt drag-selection is primarily a copy gesture; retaining it makes
+  // an accidental drag turn the next keystroke into destructive replace.
+  textarea.keep_selection_after_mouseup = false;

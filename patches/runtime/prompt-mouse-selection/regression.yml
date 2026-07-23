@@ -1,0 +1,51 @@
+id: prompt-mouse-selection-regression
+language: Rust
+severity: error
+message: Prove released mouse selections cannot replace prompt text on the next keypress.
+rule:
+  kind: function_item
+  regex: fn char_input
+fix: |-
+  fn char_input() {
+      let mut pw = PromptWidget::new();
+      assert_eq!(
+          pw.handle_key(&key!('a').to_key_event()),
+          PromptEvent::Edited
+      );
+      assert_eq!(pw.textarea.text(), "a");
+  }
+
+  #[test]
+  fn mouse_drag_selection_does_not_replace_prompt_text_after_release() {
+      let mut pw = PromptWidget::new();
+      pw.set_text("abcdef");
+      pw.textarea_area = Rect::new(0, 0, 40, 1);
+
+      for (kind, column) in [
+          (
+              crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left),
+              0,
+          ),
+          (
+              crossterm::event::MouseEventKind::Drag(crossterm::event::MouseButton::Left),
+              3,
+          ),
+          (
+              crossterm::event::MouseEventKind::Up(crossterm::event::MouseButton::Left),
+              3,
+          ),
+      ] {
+          pw.handle_mouse(&crossterm::event::MouseEvent {
+              kind,
+              column,
+              row: 0,
+              modifiers: crossterm::event::KeyModifiers::NONE,
+          });
+      }
+
+      assert_eq!(
+          pw.handle_key(&key!('X').to_key_event()),
+          PromptEvent::Edited
+      );
+      assert_eq!(pw.textarea.text(), "abcXdef");
+  }

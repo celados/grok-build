@@ -107,3 +107,27 @@ classification. `delivers_ime_as_bracketed_paste` matches `Otty` directly and is
 deliberately left alone: it gates the payload-origin check that keeps a macOS IME
 commit from being read as a clipboard paste. `otty-kkp-test-capability` asserts
 that gate still holds, so a future widening of this patch fails loudly.
+
+## Runtime: prompt mouse selection
+
+`patches/runtime/prompt-mouse-selection/behavior.yml` makes prompt drag-selection
+end on mouse-up. Upstream `TextArea` deliberately retains a mouse selection and
+deletes it before the next character insert; an inconspicuous accidental drag can
+therefore look like a terminal overwrite mode. The patch is prompt-specific so
+other textarea consumers keep their normal persistent-selection semantics.
+
+`regression.yml` injects a public-path regression: drag over `abc` in `abcdef`,
+release, then type `X`. Upstream returns `Xdef`; the patched prompt returns
+`abcXdef`. Verify it locally with:
+
+```sh
+cargo test -p xai-grok-pager \
+  mouse_drag_selection_does_not_replace_prompt_text_after_release --lib
+```
+
+Do not replace this patch with a default `/toggle-mouse-reporting` configuration.
+That command is useful as a diagnostic escape hatch, but disabling mouse reporting
+also removes unrelated TUI mouse interactions.
+
+`satisfied.yml` recognizes an equivalent upstream prompt policy and disables both
+the behavior rewrite and its downstream-only regression injection.

@@ -187,6 +187,11 @@ RUNTIME_CWD_SOURCE="crates/codegen/xai-grok-tools/src/computer/local/terminal.rs
 RUNTIME_TILDE_PATCH="patches/runtime/bash-workdir-tilde/expand.yml"
 RUNTIME_TILDE_SATISFIED="patches/runtime/bash-workdir-tilde/satisfied.yml"
 RUNTIME_TILDE_SOURCE="crates/codegen/xai-grok-tools/src/implementations/opencode/bash/mod.rs"
+RUNTIME_MOUSE_PATCH="patches/runtime/prompt-mouse-selection/behavior.yml"
+RUNTIME_MOUSE_SATISFIED="patches/runtime/prompt-mouse-selection/satisfied.yml"
+RUNTIME_MOUSE_SOURCE="crates/codegen/xai-grok-pager/src/views/prompt_widget/mod.rs"
+RUNTIME_MOUSE_REGRESSION="patches/runtime/prompt-mouse-selection/regression.yml"
+RUNTIME_MOUSE_REGRESSION_SOURCE="crates/codegen/xai-grok-pager/src/views/prompt_widget/tests.rs"
 RUNTIME_PROMPT_DIR="patches/runtime/prompt-background-tasks"
 RUNTIME_PROMPT_SOURCE="crates/codegen/xai-grok-agent/templates/prompt.md"
 RUNTIME_PROMPT_ENCRYPTED="crates/codegen/xai-grok-agent/src/prompt/prompt_encrypted.rs"
@@ -214,13 +219,22 @@ apply_conditional_patch() {
   # Three-state contract: skip only on a recognized equivalent upstream fix,
   # apply to the known buggy seam, fail on unknown drift.
   local name="$1" patch="$2" satisfied="$3" source="$4"
-  local satisfied_count apply_count
+  local companion_patch="${5:-}" companion_source="${6:-}"
+  local satisfied_count apply_count companion_count
   satisfied_count="$(ast-grep scan --rule "$ROOT_DIR/$satisfied" --info --json=compact "$SOURCES_DIR/$source" | jq 'length')"
   apply_count="$(ast-grep scan --rule "$ROOT_DIR/$patch" --info --json=compact "$SOURCES_DIR/$source" | jq 'length')"
   if [[ "$satisfied_count" == "1" ]]; then
     echo "skip: upstream already satisfies $name"
   elif [[ "$satisfied_count" == "0" && "$apply_count" == "1" ]]; then
     ACTIVE_PATCH_SPECS+="$patch $source"$'\n'
+    if [[ -n "$companion_patch" ]]; then
+      companion_count="$(ast-grep scan --rule "$ROOT_DIR/$companion_patch" --info --json=compact "$SOURCES_DIR/$companion_source" | jq 'length')"
+      if [[ "$companion_count" != "1" ]]; then
+        echo "$name companion seam drifted: $companion_patch matches=$companion_count" >&2
+        exit 1
+      fi
+      ACTIVE_PATCH_SPECS+="$companion_patch $companion_source"$'\n'
+    fi
     echo "apply: $patch -> $source"
   else
     echo "$name patch contract drifted: apply=$apply_count satisfied=$satisfied_count" >&2
@@ -230,6 +244,13 @@ apply_conditional_patch() {
 
 apply_conditional_patch "Deleted-cwd" "$RUNTIME_CWD_PATCH" "$RUNTIME_CWD_SATISFIED" "$RUNTIME_CWD_SOURCE"
 apply_conditional_patch "Bash workdir tilde" "$RUNTIME_TILDE_PATCH" "$RUNTIME_TILDE_SATISFIED" "$RUNTIME_TILDE_SOURCE"
+apply_conditional_patch \
+  "Prompt mouse selection" \
+  "$RUNTIME_MOUSE_PATCH" \
+  "$RUNTIME_MOUSE_SATISFIED" \
+  "$RUNTIME_MOUSE_SOURCE" \
+  "$RUNTIME_MOUSE_REGRESSION" \
+  "$RUNTIME_MOUSE_REGRESSION_SOURCE"
 
 text_count() {
   python3 - "$1" "$2" <<'PY'

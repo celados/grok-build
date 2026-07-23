@@ -1,0 +1,15 @@
+id: prompt-mouse-selection-already-released
+language: Rust
+severity: error
+message: Detect when upstream already ends prompt selection on mouse-up.
+rule:
+  all:
+    - pattern: $TEXTAREA.keep_selection_after_mouseup = false;
+    - inside:
+        pattern:
+          context: |-
+            pub fn new_with_cwd(cwd: &Path) -> Self {
+                $$$BODY
+            }
+          selector: function_item
+        stopBy: end
