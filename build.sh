@@ -343,7 +343,7 @@ fi
     crates/codegen/xai-grok-shell/src/session/acp_session_impl/spawn.rs \
     crates/codegen/xai-grok-pager-render/src/terminal/mod.rs \
     crates/codegen/xai-grok-pager-render/src/terminal/test.rs \
-    crates/codegen/xai-grok-pager/src/diagnostics.rs
+    crates/codegen/xai-grok-pager/src/diagnostics/mod.rs
   cargo fmt -p xai-grok-shell -p xai-grok-workspace -p xai-grok-update -- --check
   # One invocation per package: libtest ORs multiple positional filters, and
   # each extra `cargo test` re-fingerprints the whole 1274-crate graph before

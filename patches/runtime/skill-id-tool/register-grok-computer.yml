@@ -17,4 +17,7 @@ rule:
           selector: function_item
         stopBy: end
 fix: |-
-  vec![$$$ITEMS (&opencode::OpenCodeSkillTool).into()]
+  vec![
+    (&opencode::OpenCodeSkillTool).into(),
+    $$$ITEMS
+  ]

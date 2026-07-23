@@ -16,4 +16,7 @@ rule:
           selector: function_item
         stopBy: end
 fix: |-
-  tools.extend([$$$ITEMS (&opencode::OpenCodeSkillTool).into()])
+  tools.extend([
+    (&opencode::OpenCodeSkillTool).into(),
+    $$$ITEMS
+  ])
