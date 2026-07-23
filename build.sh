@@ -88,7 +88,7 @@ patches/release-installer.yml crates/codegen/xai-grok-update/src/auto_update.rs
 patches/otty-kkp.yml crates/codegen/xai-grok-pager-render/src/terminal/mod.rs
 patches/otty-kkp-test-capability.yml crates/codegen/xai-grok-pager-render/src/terminal/test.rs
 patches/otty-kkp-test-skip-reason.yml crates/codegen/xai-grok-pager-render/src/terminal/test.rs
-patches/otty-kkp-test-focus-tracking.yml crates/codegen/xai-grok-pager/src/diagnostics.rs
+patches/otty-kkp-test-focus-tracking.yml crates/codegen/xai-grok-pager/src/diagnostics/mod.rs
 patches/runtime/deleted-cwd/regression.yml crates/codegen/xai-grok-tools/src/computer/local/terminal.rs
 patches/runtime/bash-workdir-tilde/regression.yml crates/codegen/xai-grok-tools/src/implementations/opencode/bash/mod.rs
 patches/runtime/prompt-background-tasks/regression.yml crates/codegen/xai-grok-agent/src/prompt/template.rs
