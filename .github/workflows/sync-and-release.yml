@@ -107,6 +107,7 @@ jobs:
       - name: Cap persistent cargo target size
         if: steps.plan.outputs.release == 'true'
         run: |
+          echo "job PATH=$PATH"
           limit_gb=40
           size_gb="$(du -sg sources/target 2>/dev/null | cut -f1 || echo 0)"
           echo "sources/target is ${size_gb:-0} GB (limit ${limit_gb} GB)"
