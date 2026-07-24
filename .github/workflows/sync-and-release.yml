@@ -15,12 +15,12 @@ on:
         type: boolean
 
 concurrency:
-  group: sync-and-release
+  group: sync-and-release-${{ github.ref_name }}
   cancel-in-progress: false
 
 jobs:
   release:
-    runs-on: macos-15
+    runs-on: [self-hosted, macOS, ARM64]
     permissions:
       contents: write
       pull-requests: read
@@ -128,7 +128,7 @@ jobs:
       # binary. Mapping still needs to land; push uses rebase+retry for concurrent
       # commits (manual fixes, schedule cadence bumps) during a long build.
       - name: Publish GitHub Release
-        if: steps.plan.outputs.release == 'true'
+        if: steps.plan.outputs.release == 'true' && github.ref_name == 'main'
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.plan.outputs.version }}
@@ -141,7 +141,7 @@ jobs:
             --notes "Permission-free macOS arm64 build from xai-org/grok-build@$UPSTREAM."
 
       - name: Record build mapping
-        if: steps.plan.outputs.release == 'true' && steps.plan.outputs.append == 'true'
+        if: steps.plan.outputs.release == 'true' && steps.plan.outputs.append == 'true' && github.ref_name == 'main'
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.plan.outputs.version }}
@@ -173,7 +173,7 @@ jobs:
 
       - name: Open maintenance issue
         id: maintenance
-        if: ${{ failure() }}
+        if: ${{ failure() && github.ref_name == 'main' }}
         env:
           GH_TOKEN: ${{ github.token }}
           UPSTREAM: ${{ steps.plan.outputs.upstream }}
