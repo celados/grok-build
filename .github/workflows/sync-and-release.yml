@@ -86,6 +86,31 @@ jobs:
           brew untap aws/tap >/dev/null 2>&1 || true
           brew install ast-grep dotslash
 
+      # Housekeeping for the persistent runner work directory (checkout uses
+      # clean: false so sources/ and its cargo target/ survive between runs).
+      - name: Prepare persistent workspace
+        if: steps.plan.outputs.release == 'true'
+        run: |
+          # Steps run in a non-login shell; pin the rustup toolchain onto PATH
+          # rather than depending on whatever the runner service captured.
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          # A SIGKILLed build (OOM, power loss) escapes build.sh's EXIT trap
+          # and leaves patched sources/ dirty, which prepare_sources refuses.
+          # On the runner sources/ never holds precious local edits — reset.
+          if [ -d sources/.git ]; then
+            git -C sources reset --hard --quiet || true
+          fi
+          # Cargo never GCs target/; cap its growth. A cold rebuild (~23 min
+          # on this runner) is the cheaper failure mode vs unbounded disk.
+          limit_gb=40
+          size_gb="$(du -sg sources/target 2>/dev/null | cut -f1 || echo 0)"
+          echo "sources/target is ${size_gb:-0} GB (limit ${limit_gb} GB)"
+          if [ "${size_gb:-0}" -gt "$limit_gb" ]; then
+            echo "clearing sources/target for a cold rebuild"
+            rm -rf sources/target
+          fi
+          rm -rf dist
+
       - name: Prepare upstream source
         id: prepare
         if: steps.plan.outputs.release == 'true'
@@ -96,26 +121,6 @@ jobs:
           set -o pipefail
           ./build.sh --prepare --upstream-ref "$UPSTREAM" \
             2>&1 | tee .agent-context/prepare.log
-
-      # On the persistent self-hosted runner, sources/target survives between
-      # runs (checkout uses clean: false), so cargo builds incrementally off
-      # local disk and the former rust-cache upload/restore round-trip (3 min
-      # restore + 15+ min upload per release) buys nothing. What it did provide
-      # was pruning: cargo never GCs target/, so cap its growth instead — a
-      # cold rebuild costs ~23 min on this runner and is the cheaper failure
-      # mode compared to an unbounded directory.
-      - name: Cap persistent cargo target size
-        if: steps.plan.outputs.release == 'true'
-        run: |
-          echo "job PATH=$PATH"
-          limit_gb=40
-          size_gb="$(du -sg sources/target 2>/dev/null | cut -f1 || echo 0)"
-          echo "sources/target is ${size_gb:-0} GB (limit ${limit_gb} GB)"
-          if [ "${size_gb:-0}" -gt "$limit_gb" ]; then
-            echo "clearing sources/target for a cold rebuild"
-            rm -rf sources/target
-          fi
-          rm -rf dist
 
       - name: Build macOS arm64 release
         id: build
