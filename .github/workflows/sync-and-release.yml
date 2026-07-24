@@ -36,6 +36,11 @@ jobs:
           # Upstream build scripts must not inherit a repository mutation
           # credential through git configuration.
           persist-credentials: false
+          # The self-hosted runner's work directory is persistent; the default
+          # `git clean -ffdx` would wipe the untracked sources/ checkout and its
+          # cargo target/ every run, forcing a cold build. prepare_sources in
+          # build.sh already handles reusing/refreshing a dirty sources/ tree.
+          clean: false
 
       - name: Resolve upstream and version
         id: plan
@@ -92,25 +97,24 @@ jobs:
           ./build.sh --prepare --upstream-ref "$UPSTREAM" \
             2>&1 | tee .agent-context/prepare.log
 
-      # Replaces a hand-rolled cache of target/release/{deps,build,.fingerprint},
-      # measured at 8.9 GB. Two problems it could not solve:
-      #   - Cargo never GCs target/, so stale rlibs accumulated across runs (three
-      #     copies of the 148 MB xai_grok_shell rlib alone) until the entry
-      #     approached GitHub's 10 GB per-repo limit and LRU-evicted its own
-      #     restore-keys fallback.
-      #   - Patch seams were in the cache key, so editing a patch — the entire
-      #     point of this repo — forced a cold dependency build.
-      # rust-cache prunes stale artifacts and, by default, caches only dependency
-      # crates: the workspace crates it skips are exactly the ones a new upstream
-      # SHA invalidates on every release anyway.
-      - uses: Swatinem/rust-cache@v2
+      # On the persistent self-hosted runner, sources/target survives between
+      # runs (checkout uses clean: false), so cargo builds incrementally off
+      # local disk and the former rust-cache upload/restore round-trip (3 min
+      # restore + 15+ min upload per release) buys nothing. What it did provide
+      # was pruning: cargo never GCs target/, so cap its growth instead — a
+      # cold rebuild costs ~23 min on this runner and is the cheaper failure
+      # mode compared to an unbounded directory.
+      - name: Cap persistent cargo target size
         if: steps.plan.outputs.release == 'true'
-        with:
-          workspaces: sources
-          shared-key: grok-macos-arm64
-          # Seam drift aborts the build after dependencies are already compiled;
-          # keeping that work makes the retry after a patch fix cheap.
-          cache-on-failure: true
+        run: |
+          limit_gb=40
+          size_gb="$(du -sg sources/target 2>/dev/null | cut -f1 || echo 0)"
+          echo "sources/target is ${size_gb:-0} GB (limit ${limit_gb} GB)"
+          if [ "${size_gb:-0}" -gt "$limit_gb" ]; then
+            echo "clearing sources/target for a cold rebuild"
+            rm -rf sources/target
+          fi
+          rm -rf dist
 
       - name: Build macOS arm64 release
         id: build
