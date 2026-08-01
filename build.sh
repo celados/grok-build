@@ -192,6 +192,9 @@ RUNTIME_MOUSE_SATISFIED="patches/runtime/prompt-mouse-selection/satisfied.yml"
 RUNTIME_MOUSE_SOURCE="crates/codegen/xai-grok-pager/src/views/prompt_widget/mod.rs"
 RUNTIME_MOUSE_REGRESSION="patches/runtime/prompt-mouse-selection/regression.yml"
 RUNTIME_MOUSE_REGRESSION_SOURCE="crates/codegen/xai-grok-pager/src/views/prompt_widget/tests.rs"
+RUNTIME_MARK_GATEWAY_PATCH="patches/runtime/session-registry/restore-mark-require-gateway.yml"
+RUNTIME_MARK_GATEWAY_SATISFIED="patches/runtime/session-registry/satisfied.yml"
+RUNTIME_MARK_GATEWAY_SOURCE="crates/codegen/xai-grok-shell/src/agent/mvp_agent/session_registry.rs"
 RUNTIME_PROMPT_DIR="patches/runtime/prompt-background-tasks"
 RUNTIME_PROMPT_SOURCE="crates/codegen/xai-grok-agent/templates/prompt.md"
 RUNTIME_PROMPT_ENCRYPTED="crates/codegen/xai-grok-agent/src/prompt/prompt_encrypted.rs"
@@ -251,6 +254,11 @@ apply_conditional_patch \
   "$RUNTIME_MOUSE_SOURCE" \
   "$RUNTIME_MOUSE_REGRESSION" \
   "$RUNTIME_MOUSE_REGRESSION_SOURCE"
+apply_conditional_patch \
+  "SessionRegistry mark_require_gateway" \
+  "$RUNTIME_MARK_GATEWAY_PATCH" \
+  "$RUNTIME_MARK_GATEWAY_SATISFIED" \
+  "$RUNTIME_MARK_GATEWAY_SOURCE"
 
 text_count() {
   python3 - "$1" "$2" <<'PY'
@@ -338,6 +346,7 @@ assert_postcondition() {
 
 assert_postcondition "Deleted-cwd recovery" "$RUNTIME_CWD_SATISFIED" "$RUNTIME_CWD_SOURCE"
 assert_postcondition "Bash workdir tilde expansion" "$RUNTIME_TILDE_SATISFIED" "$RUNTIME_TILDE_SOURCE"
+assert_postcondition "SessionRegistry mark_require_gateway" "$RUNTIME_MARK_GATEWAY_SATISFIED" "$RUNTIME_MARK_GATEWAY_SOURCE"
 
 postcondition_text="$(text_count "$ROOT_DIR/$RUNTIME_PROMPT_DIR/satisfied.md" "$SOURCES_DIR/$RUNTIME_PROMPT_SOURCE")"
 if [[ "$postcondition_text" != "1" ]]; then
@@ -362,6 +371,7 @@ fi
     crates/codegen/xai-grok-shell/src/session/announcement_state.rs \
     crates/codegen/xai-grok-shell/src/session/acp_session_impl/mcp.rs \
     crates/codegen/xai-grok-shell/src/session/acp_session_impl/spawn.rs \
+    crates/codegen/xai-grok-shell/src/agent/mvp_agent/session_registry.rs \
     crates/codegen/xai-grok-pager-render/src/terminal/mod.rs \
     crates/codegen/xai-grok-pager-render/src/terminal/test.rs \
     crates/codegen/xai-grok-pager/src/diagnostics/mod.rs

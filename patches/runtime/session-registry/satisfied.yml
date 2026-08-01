@@ -1,0 +1,18 @@
+id: session-registry-mark-require-gateway-exists
+language: Rust
+severity: error
+message: >
+  Detect when upstream already provides an equivalent
+  SessionRegistry::mark_require_gateway helper.
+rule:
+  all:
+    - pattern:
+        context: |-
+          #[cfg(test)]
+          pub(super) fn mark_require_gateway(&self, $ID: &acp::SessionId) {
+              $$$BODY
+          }
+        selector: function_item
+    - has:
+        pattern: $RESIDENT.require_gateway = true
+        stopBy: end

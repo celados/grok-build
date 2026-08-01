@@ -236,6 +236,9 @@ jobs:
         with:
           name: agent-context-${{ steps.plan.outputs.upstream }}
           path: .agent-context
+          # Repair inputs intentionally live under a hidden directory; the
+          # artifact action excludes hidden files unless this is explicit.
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
 

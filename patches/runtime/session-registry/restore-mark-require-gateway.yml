@@ -1,0 +1,37 @@
+id: session-registry-restore-mark-require-gateway
+language: Rust
+severity: error
+message: >
+  Restore #[cfg(test)] SessionRegistry::mark_require_gateway so the
+  remove_session test can still seed resident state. Upstream a422116 rewrote
+  that test to call the helper but the monorepo export never shipped the method.
+rule:
+  kind: function_item
+  pattern: |-
+    pub(super) fn set_codebase_index(
+        &self,
+        id: &acp::SessionId,
+        index: std::sync::Arc<xai_codebase_graph::IndexManagerHandle>,
+    ) {
+        self.edit(id, |e| {
+            e.resident.get_or_insert_default().codebase_index = Some(index);
+        });
+    }
+fix: |-
+  pub(super) fn set_codebase_index(
+      &self,
+      id: &acp::SessionId,
+      index: std::sync::Arc<xai_codebase_graph::IndexManagerHandle>,
+  ) {
+      self.edit(id, |e| {
+          e.resident.get_or_insert_default().codebase_index = Some(index);
+      });
+  }
+  // Tests seed resident state via this helper; production never sets the flag
+  // through the registry in this export, so keep the method test-only.
+  #[cfg(test)]
+  pub(super) fn mark_require_gateway(&self, id: &acp::SessionId) {
+      self.edit(id, |e| {
+          e.resident.get_or_insert_default().require_gateway = true;
+      });
+  }
