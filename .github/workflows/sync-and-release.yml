@@ -23,12 +23,7 @@ jobs:
     runs-on: [self-hosted, macOS, ARM64]
     permissions:
       contents: write
-      pull-requests: read
       issues: write
-    outputs:
-      repairable: ${{ steps.maintenance.outputs.repairable }}
-      upstream: ${{ steps.plan.outputs.upstream }}
-      tracking_issue: ${{ steps.maintenance.outputs.issue }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -139,10 +134,10 @@ jobs:
         env:
           UPSTREAM: ${{ steps.plan.outputs.upstream }}
         run: |
-          mkdir -p .agent-context
+          mkdir -p .ci-logs
           set -o pipefail
           ./build.sh --prepare --upstream-ref "$UPSTREAM" \
-            2>&1 | tee .agent-context/prepare.log
+            2>&1 | tee .ci-logs/prepare.log
 
       - name: Build macOS arm64 release
         id: build
@@ -151,10 +146,10 @@ jobs:
           UPSTREAM: ${{ steps.plan.outputs.upstream }}
           VERSION: ${{ steps.plan.outputs.version }}
         run: |
-          mkdir -p .agent-context
+          mkdir -p .ci-logs
           set -o pipefail
           ./build.sh --upstream-ref "$UPSTREAM" --version "$VERSION" \
-            2>&1 | tee .agent-context/build.log
+            2>&1 | tee .ci-logs/build.log
 
       # Publish before mapping so a main-branch push race cannot strand a finished
       # binary. Mapping still needs to land; push uses rebase+retry for concurrent
@@ -212,8 +207,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           UPSTREAM: ${{ steps.plan.outputs.upstream }}
-          PREPARE_OUTCOME: ${{ steps.prepare.outcome }}
-          BUILD_OUTCOME: ${{ steps.build.outcome }}
         run: |
           short_upstream="${UPSTREAM:0:12}"
           title="Automated upstream build failed: $short_upstream"
@@ -233,39 +226,7 @@ jobs:
               --body "The same upstream revision failed again: $run_url"
           fi
 
-          repairable=false
-          if [[ "$PREPARE_OUTCOME" == failure || "$BUILD_OUTCOME" == failure ]]; then
-            branch="codex/grok-upstream-$UPSTREAM"
-            open_pr="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --head "$branch" --json number --jq '.[0].number // ""')"
-            if [[ -z "$open_pr" ]]; then
-              repairable=true
-            fi
-          fi
-
-          mkdir -p .agent-context
-          jq -n \
-            --arg repository "$GITHUB_REPOSITORY" \
-            --arg run "$run_url" \
-            --arg upstream "$UPSTREAM" \
-            --arg prepare_outcome "$PREPARE_OUTCOME" \
-            --arg build_outcome "$BUILD_OUTCOME" \
-            '{repository:$repository,run:$run,upstream:$upstream,prepare_outcome:$prepare_outcome,build_outcome:$build_outcome}' \
-            > .agent-context/task.json
-
           echo "issue=$existing" >> "$GITHUB_OUTPUT"
-          echo "repairable=$repairable" >> "$GITHUB_OUTPUT"
-
-      - name: Upload Codex repair context
-        if: ${{ failure() && steps.maintenance.outputs.repairable == 'true' }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: agent-context-${{ steps.plan.outputs.upstream }}
-          path: .agent-context
-          # Repair inputs intentionally live under a hidden directory; the
-          # artifact action excludes hidden files unless this is explicit.
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 7
 
       # The failure record and the schedule gate are the same artifact on
       # purpose: you cannot resume the poll without first looking at why it
@@ -286,7 +247,7 @@ jobs:
           else
             stage=workflow
           fi
-          log=".agent-context/$stage.log"
+          log=".ci-logs/$stage.log"
 
           {
             echo "---"
@@ -333,30 +294,3 @@ jobs:
           done
           echo "failed to push .ci-halt.md after retries" >&2
           exit 1
-
-  repair:
-    needs: release
-    if: ${{ always() && needs.release.outputs.repairable == 'true' }}
-    uses: celados/gha/.github/workflows/codex.yml@main
-    permissions:
-      contents: write
-      pull-requests: write
-      issues: write
-      actions: read
-    with:
-      task: |
-        Repair the failed xai-org/grok-build upstream integration for upstream
-        ${{ needs.release.outputs.upstream }}.
-
-        Inspect .agent-context first, then fetch that exact public upstream
-        revision when source context is needed. Keep the change in this
-        downstream repository's patch/build layer; never commit generated
-        sources. If upstream already provides the behavior of one of our
-        conditional patches, remove or disable that downstream patch through
-        its recognized satisfied-state contract instead of adapting an obsolete
-        seam. Do not change release/version mappings.
-      task_key: grok-upstream-${{ needs.release.outputs.upstream }}
-      context_artifact: agent-context-${{ needs.release.outputs.upstream }}
-      tracking_issue: ${{ needs.release.outputs.tracking_issue }}
-    secrets:
-      PRISM_API_KEY: ${{ secrets.PRISM_API_KEY }}

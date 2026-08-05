@@ -1,4 +1,4 @@
 /sources
 /dist
-/.agent-context
+/.ci-logs
 .DS_Store
