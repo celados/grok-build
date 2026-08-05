@@ -89,7 +89,6 @@ patches/otty-kkp.yml crates/codegen/xai-grok-pager-render/src/terminal/mod.rs
 patches/otty-kkp-test-capability.yml crates/codegen/xai-grok-pager-render/src/terminal/test.rs
 patches/otty-kkp-test-skip-reason.yml crates/codegen/xai-grok-pager-render/src/terminal/test.rs
 patches/otty-kkp-test-focus-tracking.yml crates/codegen/xai-grok-pager/src/diagnostics/mod.rs
-patches/runtime/deleted-cwd/regression.yml crates/codegen/xai-grok-tools/src/computer/local/terminal.rs
 patches/runtime/bash-workdir-tilde/regression.yml crates/codegen/xai-grok-tools/src/implementations/opencode/bash/mod.rs
 patches/runtime/prompt-background-tasks/regression.yml crates/codegen/xai-grok-agent/src/prompt/template.rs
 patches/runtime/skill-id-base/skill-info-methods.yml crates/codegen/xai-grok-tools/src/implementations/skills/types.rs
@@ -181,9 +180,6 @@ patches/runtime/skill-fuzzy-dedup/remove-doc-7.yml crates/codegen/xai-grok-agent
 patches/runtime/skill-fuzzy-dedup/remove-doc-rekey.yml crates/codegen/xai-grok-agent/src/prompt/skills.rs
 "
 
-RUNTIME_CWD_PATCH="patches/runtime/deleted-cwd/recover.yml"
-RUNTIME_CWD_SATISFIED="patches/runtime/deleted-cwd/satisfied.yml"
-RUNTIME_CWD_SOURCE="crates/codegen/xai-grok-tools/src/computer/local/terminal.rs"
 RUNTIME_TILDE_PATCH="patches/runtime/bash-workdir-tilde/expand.yml"
 RUNTIME_TILDE_SATISFIED="patches/runtime/bash-workdir-tilde/satisfied.yml"
 RUNTIME_TILDE_SOURCE="crates/codegen/xai-grok-tools/src/implementations/opencode/bash/mod.rs"
@@ -192,9 +188,6 @@ RUNTIME_MOUSE_SATISFIED="patches/runtime/prompt-mouse-selection/satisfied.yml"
 RUNTIME_MOUSE_SOURCE="crates/codegen/xai-grok-pager/src/views/prompt_widget/mod.rs"
 RUNTIME_MOUSE_REGRESSION="patches/runtime/prompt-mouse-selection/regression.yml"
 RUNTIME_MOUSE_REGRESSION_SOURCE="crates/codegen/xai-grok-pager/src/views/prompt_widget/tests.rs"
-RUNTIME_MARK_GATEWAY_PATCH="patches/runtime/session-registry/restore-mark-require-gateway.yml"
-RUNTIME_MARK_GATEWAY_SATISFIED="patches/runtime/session-registry/satisfied.yml"
-RUNTIME_MARK_GATEWAY_SOURCE="crates/codegen/xai-grok-shell/src/agent/mvp_agent/session_registry.rs"
 RUNTIME_BASE64_PATCH="patches/runtime/base64-engine-import/import.yml"
 RUNTIME_BASE64_SATISFIED="patches/runtime/base64-engine-import/satisfied.yml"
 RUNTIME_BASE64_SOURCE="crates/codegen/xai-grok-shell/src/session/acp_session_tests/tool_layer_images_bridge_tests.rs"
@@ -248,7 +241,6 @@ apply_conditional_patch() {
   fi
 }
 
-apply_conditional_patch "Deleted-cwd" "$RUNTIME_CWD_PATCH" "$RUNTIME_CWD_SATISFIED" "$RUNTIME_CWD_SOURCE"
 apply_conditional_patch "Bash workdir tilde" "$RUNTIME_TILDE_PATCH" "$RUNTIME_TILDE_SATISFIED" "$RUNTIME_TILDE_SOURCE"
 apply_conditional_patch \
   "Prompt mouse selection" \
@@ -257,11 +249,6 @@ apply_conditional_patch \
   "$RUNTIME_MOUSE_SOURCE" \
   "$RUNTIME_MOUSE_REGRESSION" \
   "$RUNTIME_MOUSE_REGRESSION_SOURCE"
-apply_conditional_patch \
-  "SessionRegistry mark_require_gateway" \
-  "$RUNTIME_MARK_GATEWAY_PATCH" \
-  "$RUNTIME_MARK_GATEWAY_SATISFIED" \
-  "$RUNTIME_MARK_GATEWAY_SOURCE"
 # Not a downstream behavior patch: upstream ed6d543 shipped a test module that
 # calls `general_purpose::STANDARD.encode(..)` without `use base64::Engine`, so
 # the xai-grok-shell lib-test target — which our own regression test needs —
@@ -357,9 +344,7 @@ assert_postcondition() {
   fi
 }
 
-assert_postcondition "Deleted-cwd recovery" "$RUNTIME_CWD_SATISFIED" "$RUNTIME_CWD_SOURCE"
 assert_postcondition "Bash workdir tilde expansion" "$RUNTIME_TILDE_SATISFIED" "$RUNTIME_TILDE_SOURCE"
-assert_postcondition "SessionRegistry mark_require_gateway" "$RUNTIME_MARK_GATEWAY_SATISFIED" "$RUNTIME_MARK_GATEWAY_SOURCE"
 assert_postcondition "base64::Engine import" "$RUNTIME_BASE64_SATISFIED" "$RUNTIME_BASE64_SOURCE"
 
 postcondition_text="$(text_count "$ROOT_DIR/$RUNTIME_PROMPT_DIR/satisfied.md" "$SOURCES_DIR/$RUNTIME_PROMPT_SOURCE")"
@@ -373,7 +358,6 @@ fi
   # ast-grep preserves metavariable indentation when it inserts the regression
   # test; format only the owned patched files so unrelated upstream files stay untouched.
   rustfmt --edition 2024 \
-    crates/codegen/xai-grok-tools/src/computer/local/terminal.rs \
     crates/codegen/xai-grok-tools/src/implementations/opencode/bash/mod.rs \
     crates/codegen/xai-grok-tools/src/implementations/skills/types.rs \
     crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs \
@@ -385,7 +369,6 @@ fi
     crates/codegen/xai-grok-shell/src/session/announcement_state.rs \
     crates/codegen/xai-grok-shell/src/session/acp_session_impl/mcp.rs \
     crates/codegen/xai-grok-shell/src/session/acp_session_impl/spawn.rs \
-    crates/codegen/xai-grok-shell/src/agent/mvp_agent/session_registry.rs \
     crates/codegen/xai-grok-pager-render/src/terminal/mod.rs \
     crates/codegen/xai-grok-pager-render/src/terminal/test.rs \
     crates/codegen/xai-grok-pager/src/diagnostics/mod.rs
@@ -394,7 +377,6 @@ fi
   # each extra `cargo test` re-fingerprints the whole 1274-crate graph before
   # deciding it has nothing to rebuild.
   cargo test --release -p xai-grok-tools --lib -- \
-    test_persistent_shell_recovers_deleted_cwd \
     workdir_expands_tilde_to_home \
     fnv_vector_low_24_bits \
     find_skill_by_id_and_collision \
