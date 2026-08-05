@@ -1,0 +1,14 @@
+id: acp-session-tool-layer-images-base64-engine-import
+language: Rust
+severity: error
+message: >
+  Import base64::Engine into the tool-layer image bridge test module. Upstream
+  ed6d543 added `general_purpose::STANDARD.encode(..)` there without the trait
+  import, so `cargo test -p xai-grok-shell --lib` fails to compile (E0599).
+rule:
+  # `use super::support::*;` sits above this and is a different tree, so the
+  # bare-glob pattern anchors the insertion point uniquely.
+  pattern: use super::*;
+fix: |-
+  use super::*;
+  use base64::Engine;

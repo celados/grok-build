@@ -1,0 +1,8 @@
+id: acp-session-tool-layer-images-base64-engine-imported
+language: Rust
+severity: error
+message: >
+  Detect that the tool-layer image bridge test module already has base64::Engine
+  in scope — upstream fixing its own compile error retires this patch.
+rule:
+  pattern: use base64::Engine;

@@ -195,6 +195,9 @@ RUNTIME_MOUSE_REGRESSION_SOURCE="crates/codegen/xai-grok-pager/src/views/prompt_
 RUNTIME_MARK_GATEWAY_PATCH="patches/runtime/session-registry/restore-mark-require-gateway.yml"
 RUNTIME_MARK_GATEWAY_SATISFIED="patches/runtime/session-registry/satisfied.yml"
 RUNTIME_MARK_GATEWAY_SOURCE="crates/codegen/xai-grok-shell/src/agent/mvp_agent/session_registry.rs"
+RUNTIME_BASE64_PATCH="patches/runtime/base64-engine-import/import.yml"
+RUNTIME_BASE64_SATISFIED="patches/runtime/base64-engine-import/satisfied.yml"
+RUNTIME_BASE64_SOURCE="crates/codegen/xai-grok-shell/src/session/acp_session_tests/tool_layer_images_bridge_tests.rs"
 RUNTIME_PROMPT_DIR="patches/runtime/prompt-background-tasks"
 RUNTIME_PROMPT_SOURCE="crates/codegen/xai-grok-agent/templates/prompt.md"
 RUNTIME_PROMPT_ENCRYPTED="crates/codegen/xai-grok-agent/src/prompt/prompt_encrypted.rs"
@@ -259,6 +262,16 @@ apply_conditional_patch \
   "$RUNTIME_MARK_GATEWAY_PATCH" \
   "$RUNTIME_MARK_GATEWAY_SATISFIED" \
   "$RUNTIME_MARK_GATEWAY_SOURCE"
+# Not a downstream behavior patch: upstream ed6d543 shipped a test module that
+# calls `general_purpose::STANDARD.encode(..)` without `use base64::Engine`, so
+# the xai-grok-shell lib-test target — which our own regression test needs —
+# does not compile. Carried under the same three-state contract so it retires
+# itself the moment upstream fixes its export.
+apply_conditional_patch \
+  "base64::Engine import" \
+  "$RUNTIME_BASE64_PATCH" \
+  "$RUNTIME_BASE64_SATISFIED" \
+  "$RUNTIME_BASE64_SOURCE"
 
 text_count() {
   python3 - "$1" "$2" <<'PY'
@@ -347,6 +360,7 @@ assert_postcondition() {
 assert_postcondition "Deleted-cwd recovery" "$RUNTIME_CWD_SATISFIED" "$RUNTIME_CWD_SOURCE"
 assert_postcondition "Bash workdir tilde expansion" "$RUNTIME_TILDE_SATISFIED" "$RUNTIME_TILDE_SOURCE"
 assert_postcondition "SessionRegistry mark_require_gateway" "$RUNTIME_MARK_GATEWAY_SATISFIED" "$RUNTIME_MARK_GATEWAY_SOURCE"
+assert_postcondition "base64::Engine import" "$RUNTIME_BASE64_SATISFIED" "$RUNTIME_BASE64_SOURCE"
 
 postcondition_text="$(text_count "$ROOT_DIR/$RUNTIME_PROMPT_DIR/satisfied.md" "$SOURCES_DIR/$RUNTIME_PROMPT_SOURCE")"
 if [[ "$postcondition_text" != "1" ]]; then
