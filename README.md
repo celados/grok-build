@@ -48,3 +48,12 @@ building (~15s no-op). The version-to-upstream mapping is recorded in
 
 If upstream changes an AST seam, the workflow stops and opens a maintenance
 issue rather than publishing a partially patched binary.
+
+A failed build also commits [.ci-halt.md](.ci-halt.md) — the failing log tail
+plus the run URL — and the scheduled poll skips every run while that file
+exists, because retrying an unrepaired tree only burns the runner. Two ways
+out, both of which require having looked at the record:
+
+- delete `.ci-halt.md` from `main` to resume polling, or
+- run the workflow manually (`workflow_dispatch` ignores the gate) to test a
+  candidate fix; a successful build deletes the record itself.

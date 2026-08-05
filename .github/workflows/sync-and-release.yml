@@ -42,8 +42,30 @@ jobs:
           # build.sh already handles reusing/refreshing a dirty sources/ tree.
           clean: false
 
+      # A failed build parks the schedule by committing .ci-halt.md (see "Park
+      # the schedule" below). Polling a known-broken tree every 15 minutes only
+      # burns the runner and re-notifies, so the poll stays off until the record
+      # is gone. workflow_dispatch deliberately ignores the gate — a manual run
+      # is how you retry a candidate fix without first deleting the evidence.
+      - name: Check for a parked failure
+        id: halt
+        if: github.event_name == 'schedule'
+        run: |
+          [[ -f .ci-halt.md ]] || exit 0
+          echo "halted=true" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Schedule parked"
+            echo
+            echo "Delete \`.ci-halt.md\` from \`main\` to resume polling, or run this workflow manually to retry now."
+            echo
+            cat .ci-halt.md
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Resolve upstream and version
         id: plan
+        # Every later step already gates on plan's outputs, so skipping plan
+        # short-circuits the whole job without repeating the condition.
+        if: steps.halt.outputs.halted != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           FORCE_RELEASE: ${{ inputs.force_release || false }}
@@ -169,6 +191,9 @@ jobs:
             --arg run "$GITHUB_RUN_ID" \
             '{version:$version,upstream:$upstream,built_at:$built_at,run:$run}' >> versions.jsonl
           git add versions.jsonl
+          # A published binary proves the parked failure is repaired; retire the
+          # record in the same commit so main never advertises a stale halt.
+          git rm -q --ignore-unmatch .ci-halt.md
           git commit -m "release: record v$VERSION from upstream ${UPSTREAM:0:7}"
           # Long builds race with other pushes to main; rebase rather than fail.
           for attempt in 1 2 3 4 5; do
@@ -241,6 +266,73 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
+
+      # The failure record and the schedule gate are the same artifact on
+      # purpose: you cannot resume the poll without first looking at why it
+      # stopped. Delete .ci-halt.md to resume; a green build deletes it for you.
+      - name: Park the schedule
+        if: ${{ failure() && github.ref_name == 'main' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPSTREAM: ${{ steps.plan.outputs.upstream }}
+          PREPARE_OUTCOME: ${{ steps.prepare.outcome }}
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          ISSUE: ${{ steps.maintenance.outputs.issue }}
+        run: |
+          if [[ "$BUILD_OUTCOME" == failure ]]; then
+            stage=build
+          elif [[ "$PREPARE_OUTCOME" == failure ]]; then
+            stage=prepare
+          else
+            stage=workflow
+          fi
+          log=".agent-context/$stage.log"
+
+          {
+            echo "---"
+            echo "stage: $stage"
+            echo "upstream: $UPSTREAM"
+            echo "run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo "issue: ${ISSUE:-none}"
+            echo "failed_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "---"
+            echo
+            echo "# Scheduled build parked"
+            echo
+            echo "The 15-minute upstream poll is suspended while this file exists on"
+            echo "\`main\`. Delete it to resume, or run the workflow manually to retry a"
+            echo "candidate fix — a successful build removes this file itself."
+            echo
+            echo "## Diagnostics"
+            echo
+            echo '```text'
+            # Tail rather than the whole log: cargo's failing diagnostic is the
+            # last thing it prints, and the run URL still has everything else.
+            if [[ -f "$log" ]]; then tail -n 100 "$log"; else echo "no $log; the failure was outside build.sh"; fi
+            echo '```'
+          } > .ci-halt.md
+
+          # Checkout credentials were intentionally removed before executing
+          # upstream code; restore GitHub auth only on this trusted path.
+          gh auth setup-git
+          git config user.name "celados-release-bot"
+          git config user.email "huodong.work@gmail.com"
+          git add .ci-halt.md
+          if git diff --cached --quiet; then
+            echo "already parked with an identical record"
+            exit 0
+          fi
+          git commit -m "ci: park schedule after ${UPSTREAM:0:7} failed"
+          # Same race as the release mapping push: rebase rather than fail.
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            git pull --rebase origin main
+            sleep $((attempt * 2))
+          done
+          echo "failed to push .ci-halt.md after retries" >&2
+          exit 1
 
   repair:
     needs: release

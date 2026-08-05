@@ -1,3 +1,4 @@
 /sources
 /dist
+/.agent-context
 .DS_Store
