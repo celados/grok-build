@@ -183,11 +183,6 @@ patches/runtime/skill-fuzzy-dedup/remove-doc-rekey.yml crates/codegen/xai-grok-a
 RUNTIME_TILDE_PATCH="patches/runtime/bash-workdir-tilde/expand.yml"
 RUNTIME_TILDE_SATISFIED="patches/runtime/bash-workdir-tilde/satisfied.yml"
 RUNTIME_TILDE_SOURCE="crates/codegen/xai-grok-tools/src/implementations/opencode/bash/mod.rs"
-RUNTIME_MOUSE_PATCH="patches/runtime/prompt-mouse-selection/behavior.yml"
-RUNTIME_MOUSE_SATISFIED="patches/runtime/prompt-mouse-selection/satisfied.yml"
-RUNTIME_MOUSE_SOURCE="crates/codegen/xai-grok-pager/src/views/prompt_widget/mod.rs"
-RUNTIME_MOUSE_REGRESSION="patches/runtime/prompt-mouse-selection/regression.yml"
-RUNTIME_MOUSE_REGRESSION_SOURCE="crates/codegen/xai-grok-pager/src/views/prompt_widget/tests.rs"
 RUNTIME_BASE64_PATCH="patches/runtime/base64-engine-import/import.yml"
 RUNTIME_BASE64_SATISFIED="patches/runtime/base64-engine-import/satisfied.yml"
 RUNTIME_BASE64_SOURCE="crates/codegen/xai-grok-shell/src/session/acp_session_tests/tool_layer_images_bridge_tests.rs"
@@ -242,13 +237,6 @@ apply_conditional_patch() {
 }
 
 apply_conditional_patch "Bash workdir tilde" "$RUNTIME_TILDE_PATCH" "$RUNTIME_TILDE_SATISFIED" "$RUNTIME_TILDE_SOURCE"
-apply_conditional_patch \
-  "Prompt mouse selection" \
-  "$RUNTIME_MOUSE_PATCH" \
-  "$RUNTIME_MOUSE_SATISFIED" \
-  "$RUNTIME_MOUSE_SOURCE" \
-  "$RUNTIME_MOUSE_REGRESSION" \
-  "$RUNTIME_MOUSE_REGRESSION_SOURCE"
 # Not a downstream behavior patch: upstream ed6d543 shipped a test module that
 # calls `general_purpose::STANDARD.encode(..)` without `use base64::Engine`, so
 # the xai-grok-shell lib-test target — which our own regression test needs —
