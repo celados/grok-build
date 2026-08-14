@@ -90,7 +90,6 @@ patches/otty-kkp-test-capability.yml crates/codegen/xai-grok-pager-render/src/te
 patches/otty-kkp-test-skip-reason.yml crates/codegen/xai-grok-pager-render/src/terminal/test.rs
 patches/otty-kkp-test-focus-tracking.yml crates/codegen/xai-grok-pager/src/diagnostics/mod.rs
 patches/runtime/bash-workdir-tilde/regression.yml crates/codegen/xai-grok-tools/src/implementations/opencode/bash/mod.rs
-patches/runtime/prompt-background-tasks/regression.yml crates/codegen/xai-grok-agent/src/prompt/template.rs
 patches/runtime/skill-id-base/skill-info-methods.yml crates/codegen/xai-grok-tools/src/implementations/skills/types.rs
 patches/runtime/skill-id-tool/description.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
 patches/runtime/skill-id-tool/input-id.yml crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs
@@ -186,10 +185,6 @@ RUNTIME_TILDE_SOURCE="crates/codegen/xai-grok-tools/src/implementations/opencode
 RUNTIME_BASE64_PATCH="patches/runtime/base64-engine-import/import.yml"
 RUNTIME_BASE64_SATISFIED="patches/runtime/base64-engine-import/satisfied.yml"
 RUNTIME_BASE64_SOURCE="crates/codegen/xai-grok-shell/src/session/acp_session_tests/tool_layer_images_bridge_tests.rs"
-RUNTIME_PROMPT_DIR="patches/runtime/prompt-background-tasks"
-RUNTIME_PROMPT_SOURCE="crates/codegen/xai-grok-agent/templates/prompt.md"
-RUNTIME_PROMPT_ENCRYPTED="crates/codegen/xai-grok-agent/src/prompt/prompt_encrypted.rs"
-APPLY_PROMPT_TEXT_PATCH=false
 ACTIVE_PATCH_SPECS="$REQUIRED_PATCH_SPECS"
 
 assert_patch_seams() {
@@ -248,30 +243,6 @@ apply_conditional_patch \
   "$RUNTIME_BASE64_SATISFIED" \
   "$RUNTIME_BASE64_SOURCE"
 
-text_count() {
-  python3 - "$1" "$2" <<'PY'
-import sys
-
-needle = open(sys.argv[1], encoding="utf-8").read()
-haystack = open(sys.argv[2], encoding="utf-8").read()
-print(haystack.count(needle))
-PY
-}
-
-# Text patches carry the same three-state contract as AST patches, for files
-# ast-grep cannot parse (jinja templates, prose).
-satisfied_count="$(text_count "$ROOT_DIR/$RUNTIME_PROMPT_DIR/satisfied.md" "$SOURCES_DIR/$RUNTIME_PROMPT_SOURCE")"
-apply_count="$(text_count "$ROOT_DIR/$RUNTIME_PROMPT_DIR/section.old.md" "$SOURCES_DIR/$RUNTIME_PROMPT_SOURCE")"
-if [[ "$satisfied_count" == "1" ]]; then
-  echo "skip: upstream already satisfies Background-tasks prompt"
-elif [[ "$satisfied_count" == "0" && "$apply_count" == "1" ]]; then
-  APPLY_PROMPT_TEXT_PATCH=true
-  echo "apply: $RUNTIME_PROMPT_DIR/section.new.md -> $RUNTIME_PROMPT_SOURCE"
-else
-  echo "Background-tasks prompt patch contract drifted: apply=$apply_count satisfied=$satisfied_count" >&2
-  exit 1
-fi
-
 if [[ "$CHECK_ONLY" == true ]]; then
   exit 0
 fi
@@ -285,7 +256,7 @@ if [[ "$(uname -s)" != Darwin || "$(uname -m)" != arm64 ]]; then
   exit 1
 fi
 
-PATCHED_FILES="$(echo "$ACTIVE_PATCH_SPECS" | awk 'NF && !seen[$2]++ { print $2 }') $RUNTIME_PROMPT_SOURCE $RUNTIME_PROMPT_ENCRYPTED"
+PATCHED_FILES="$(echo "$ACTIVE_PATCH_SPECS" | awk 'NF && !seen[$2]++ { print $2 }')"
 for source in $PATCHED_FILES; do
   if ! git -C "$SOURCES_DIR" diff --quiet HEAD -- "$source"; then
     echo "Refusing to patch a modified source file: $source" >&2
@@ -304,24 +275,6 @@ echo "$ACTIVE_PATCH_SPECS" | while read -r rule source; do
   ast-grep scan --rule "$ROOT_DIR/$rule" --info --update-all "$SOURCES_DIR/$source"
 done
 
-if [[ "$APPLY_PROMPT_TEXT_PATCH" == true ]]; then
-  python3 - "$ROOT_DIR/$RUNTIME_PROMPT_DIR/section.old.md" "$ROOT_DIR/$RUNTIME_PROMPT_DIR/section.new.md" "$SOURCES_DIR/$RUNTIME_PROMPT_SOURCE" <<'PY'
-import sys
-
-old = open(sys.argv[1], encoding="utf-8").read()
-new = open(sys.argv[2], encoding="utf-8").read()
-path = sys.argv[3]
-text = open(path, encoding="utf-8").read()
-if text.count(old) != 1:
-    raise SystemExit("prompt section old text must appear exactly once")
-open(path, "w", encoding="utf-8").write(text.replace(old, new, 1))
-PY
-fi
-
-# Templates ship XOR-encrypted in the binary; regenerate after any prompt
-# change. Deterministic, so an unchanged template re-encrypts identically.
-( cd "$SOURCES_DIR/crates/codegen/xai-grok-agent" && python3 scripts/encrypt_templates.py )
-
 assert_postcondition() {
   local name="$1" satisfied="$2" source="$3"
   local count
@@ -334,12 +287,6 @@ assert_postcondition() {
 
 assert_postcondition "Bash workdir tilde expansion" "$RUNTIME_TILDE_SATISFIED" "$RUNTIME_TILDE_SOURCE"
 assert_postcondition "base64::Engine import" "$RUNTIME_BASE64_SATISFIED" "$RUNTIME_BASE64_SOURCE"
-
-postcondition_text="$(text_count "$ROOT_DIR/$RUNTIME_PROMPT_DIR/satisfied.md" "$SOURCES_DIR/$RUNTIME_PROMPT_SOURCE")"
-if [[ "$postcondition_text" != "1" ]]; then
-  echo "Background-tasks prompt postcondition expected 1 match, found $postcondition_text" >&2
-  exit 1
-fi
 
 (
   cd "$SOURCES_DIR"
@@ -371,8 +318,7 @@ fi
     skill_file_read_and_menu \
     markdown_listing_includes_ids_in_full_and_name_only_tiers
   cargo test --release -p xai-grok-agent --lib -- \
-    dedupe_skills_name_collision_does_not_propagate_config_source \
-    test_background_tasks_defines_callback_and_poll
+    dedupe_skills_name_collision_does_not_propagate_config_source
   cargo test --release -p xai-grok-shell --lib -- backward_compat_empty_json
   # Otty KKP opt-in: the second test also pins the IME payload-origin gate that
   # must stay Otty-only. The diagnostics focus-tracking flip rides the same
