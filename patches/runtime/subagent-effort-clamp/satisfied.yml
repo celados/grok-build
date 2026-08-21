@@ -1,0 +1,7 @@
+id: subagent-effort-clamp-already-applied
+language: Rust
+severity: error
+message: Detect the effort clamp already present after the subagent override block.
+rule:
+  kind: string_literal
+  regex: "outside the model's declared set; clamping"

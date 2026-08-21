@@ -185,6 +185,9 @@ RUNTIME_TILDE_SOURCE="crates/codegen/xai-grok-tools/src/implementations/opencode
 RUNTIME_BASE64_PATCH="patches/runtime/base64-engine-import/import.yml"
 RUNTIME_BASE64_SATISFIED="patches/runtime/base64-engine-import/satisfied.yml"
 RUNTIME_BASE64_SOURCE="crates/codegen/xai-grok-shell/src/session/acp_session_tests/tool_layer_images_bridge_tests.rs"
+RUNTIME_EFFORT_CLAMP_PATCH="patches/runtime/subagent-effort-clamp/patch.yml"
+RUNTIME_EFFORT_CLAMP_SATISFIED="patches/runtime/subagent-effort-clamp/satisfied.yml"
+RUNTIME_EFFORT_CLAMP_SOURCE="crates/codegen/xai-grok-shell/src/agent/subagent/handle_request.rs"
 ACTIVE_PATCH_SPECS="$REQUIRED_PATCH_SPECS"
 
 assert_patch_seams() {
@@ -242,6 +245,11 @@ apply_conditional_patch \
   "$RUNTIME_BASE64_PATCH" \
   "$RUNTIME_BASE64_SATISFIED" \
   "$RUNTIME_BASE64_SOURCE"
+apply_conditional_patch \
+  "Subagent effort clamp" \
+  "$RUNTIME_EFFORT_CLAMP_PATCH" \
+  "$RUNTIME_EFFORT_CLAMP_SATISFIED" \
+  "$RUNTIME_EFFORT_CLAMP_SOURCE"
 
 if [[ "$CHECK_ONLY" == true ]]; then
   exit 0
@@ -287,12 +295,14 @@ assert_postcondition() {
 
 assert_postcondition "Bash workdir tilde expansion" "$RUNTIME_TILDE_SATISFIED" "$RUNTIME_TILDE_SOURCE"
 assert_postcondition "base64::Engine import" "$RUNTIME_BASE64_SATISFIED" "$RUNTIME_BASE64_SOURCE"
+assert_postcondition "Subagent effort clamp" "$RUNTIME_EFFORT_CLAMP_SATISFIED" "$RUNTIME_EFFORT_CLAMP_SOURCE"
 
 (
   cd "$SOURCES_DIR"
   # ast-grep preserves metavariable indentation when it inserts the regression
   # test; format only the owned patched files so unrelated upstream files stay untouched.
   rustfmt --edition 2024 \
+    crates/codegen/xai-grok-shell/src/agent/subagent/handle_request.rs \
     crates/codegen/xai-grok-tools/src/implementations/opencode/bash/mod.rs \
     crates/codegen/xai-grok-tools/src/implementations/skills/types.rs \
     crates/codegen/xai-grok-tools/src/implementations/opencode/skill/mod.rs \

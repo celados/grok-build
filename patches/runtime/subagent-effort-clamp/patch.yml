@@ -1,0 +1,58 @@
+id: subagent-effort-clamp
+language: Rust
+severity: error
+message: >
+  Clamp the subagent reasoning effort to the model's declared value set. The
+  capability gate only checks that the model supports an effort at all, so an
+  out-of-set value reaches the wire and fails at the provider (observed with
+  OpenCode Zen: [1210] "please use low, high, or max").
+rule:
+  pattern: |
+    if let Some(raw) = effective_runtime.reasoning_effort.as_deref()
+        && ctx
+            .models_manager
+            .model_supports_reasoning_effort(effective_model_id.0.as_ref())
+    {
+        $$$BODY
+    }
+fix: |-
+  if let Some(raw) = effective_runtime.reasoning_effort.as_deref()
+      && ctx
+          .models_manager
+          .model_supports_reasoning_effort(effective_model_id.0.as_ref())
+  {
+      match raw.parse::<ReasoningEffort>() {
+          Ok(eff) => effective_sampling_config.reasoning_effort = Some(eff),
+          Err(err) => {
+              tracing::warn!(
+                  value = raw,
+                  error = %err,
+                  "subagent reasoning_effort: parse failed, ignoring override"
+              )
+          }
+      }
+  }
+  // The gate above only checks that the model accepts a reasoning_effort at
+  // all, not that the value is in the model's declared set, so an out-of-set
+  // effort reaches the wire and fails at the provider (observed: OpenCode Zen
+  // [1210] "please use low, high, or max"). Clamp to the declared set: the
+  // catalog default when it is in-set, else the first declared entry.
+  let allowed = ctx
+      .models_manager
+      .model_reasoning_efforts(effective_model_id.0.as_ref());
+  if !allowed.is_empty()
+      && let Some(eff) = effective_sampling_config.reasoning_effort
+      && !allowed.iter().any(|opt| opt.value == eff)
+  {
+      let clamped = ctx
+          .models_manager
+          .model_default_reasoning_effort(effective_model_id.0.as_ref())
+          .filter(|default| allowed.iter().any(|opt| opt.value == *default))
+          .or_else(|| allowed.first().map(|opt| opt.value));
+      tracing::warn!(
+          requested = eff.as_str(),
+          clamped_to = clamped.as_ref().map_or("none", |e| e.as_str()),
+          "subagent reasoning_effort outside the model's declared set; clamping"
+      );
+      effective_sampling_config.reasoning_effort = clamped;
+  }
